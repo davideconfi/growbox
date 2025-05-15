@@ -27,7 +27,7 @@
             text-align: center;
             letter-spacing: 5px;
         }   
-        .box { background: #edf814; padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 50%; box-shadow: 6px 4px 5px 3px #000000;}
+        .box { background: #edf814; padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 90%; max-width: 500px; box-shadow: 6px 4px 5px 3px #000000;}
         .btn { padding: 10px 20px; margin: 10px; font-size: 16px;box-shadow: -2px 3px 1px 1px #000000;  }
         .auto { background-color: #046dec; color: white; }
         .man { background-color: #bb0b0b; color: white; }
@@ -40,11 +40,12 @@
                 </div>
                 <div class="box">
                     <center><h2><strong> ELEGIR MODALIDAD</strong></h2></center>
-                    <center><a href="paginaManual.html"> 
-                        <button class="btn auto" onclick="toggle('paginaManual')">MANUAL</button>
-                    </a> 
+                    <a href="paginaManual.html">
+                        <button class="btn auto">MANUAL</button>
+                      </a>
+                      
                     <a href="paginaAutomatico.html"> 
-                        <button class="btn man" onclick="toggle('paginaAutomatico')">AUTOMATICA</button>
+                        <button class="btn man" >AUTOMATICA</button>
                     </a> 
                     </center>
                 </div>
@@ -57,7 +58,7 @@
                 
     </center>
     <script>
-        /* function fetchSensorData() {
+         function fetchSensorData() {
             fetch("/status")
                 .then(response => response.json())
                 .then(data => {
@@ -70,7 +71,7 @@
         }
 
         setInterval(fetchSensorData, 500); // aggiorna ogni 5 secondi
-        window.onload = fetchSensorData; // aggiorna all’avvio */
+        window.onload = fetchSensorData; // aggiorna all’avvio 
     </script>
 </body>
 </html>
