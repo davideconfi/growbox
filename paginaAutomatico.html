@@ -43,23 +43,23 @@
                         <img src="UV.png" alt="Luz UV" style="width: 120px; height: auto;">
                     </div>
                     <div class="box2">
-                        <button class="btn man" onclick="ciclo_elegido('ciclo', 'Plantula')">Plantula </button>
-                        <button class="btn man" onclick="ciclo_elegido('ciclo', 'Vegetativo')">Vegetativo</button>
-                        <button class="btn man" onclick="ciclo_elegido('ciclo', 'Floracion')">Floracion</button>
-                        <button class="btn man" onclick="ciclo_elegido('ciclo', 'Luz UV')">Luz UV</button>
+                        <button class="btn man" onclick="ciclo_elegido('Plantula')">Plantula </button>
+                        <button class="btn man" onclick="ciclo_elegido('Vegetativo')">Vegetativo</button>
+                        <button class="btn man" onclick="ciclo_elegido('Floracion')">Floracion</button>
+                        <button class="btn man" onclick="ciclo_elegido('Luz UV')">Luz UV</button>
                                         </div>
                            
 
                         <div class="box2">
                             <center><h2><strong>Elegir el numero de semanas</strong></h2></center>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '1')">1</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '2')">2</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '3')">3</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '4')">4</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '5')">5</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '6')">6</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '7')">7</button>
-                            <button class="btn auto" onclick="numero_semanas('semanas', '8')">8</button>
+                            <button class="btn auto" onclick="numero_semanas('1')">1</button>
+                            <button class="btn auto" onclick="numero_semanas('2')">2</button>
+                            <button class="btn auto" onclick="numero_semanas('3')">3</button>
+                            <button class="btn auto" onclick="numero_semanas('4')">4</button>
+                            <button class="btn auto" onclick="numero_semanas('5')">5</button>
+                            <button class="btn auto" onclick="numero_semanas('6')">6</button>
+                            <button class="btn auto" onclick="numero_semanas('7')">7</button>
+                            <button class="btn auto" onclick="numero_semanas('8')">8</button>
                     </div>
                     <a href="index.html">
                     <button class="btn man">HOME</button>
@@ -69,7 +69,7 @@
     </center>
     <script>
         function numero_semanas(numero) {
-            fetch(`/semanas?numero=${numero}`);
+            fetch(`/numero?semanas=${numero}`);
         }
         function ciclo_elegido(ciclo) {
             fetch(`/ciclo?ciclo=${ciclo}`);
