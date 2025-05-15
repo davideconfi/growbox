@@ -21,7 +21,7 @@
             text-align: center;
             letter-spacing: 5px;
         }   
-        .box { background: #EBD915; padding: 15px; border-radius: 10px; margin-bottom: 20px;  width: 40%; height: auto;}
+        .box { background: #EBD915; padding: 15px; border-radius: 10px; margin-bottom: 20px;  width: 90%; max-width: 400px; height: auto;}
         .boxled { background: #EBD915; padding: 15px; border-radius: 10px;  margin-bottom: 20px; width: 40%; height: auto;}
 
         .btn { padding: 10px 20px; margin-top: 4; margin-left: 4;margin-right: 4;margin-bottom: 4; font-size: 16px; }
@@ -46,23 +46,23 @@
                 <center><h2><strong>Elegir la intensidad de cada tipo de led</strong></h2>
                 <div class="boxled">
                     <h2>LED1</h2>
-                    <input type="range" id="ledSlider" min="0" max="1023" value="0" oninput="updateLED(0, this.value)">
+                    <input type="range" id="led1" min="0" max="1023" value="0" oninput="updateLED(0, this.value)">
                 </div>
                 <div class="boxled">
                     <h2>LED2</h2>
-                    <input type="range" id="ledSlider" min="0" max="1023" value="0" oninput="updateLED(1, this.value)">
+                    <input type="range" id="led2" min="0" max="1023" value="0" oninput="updateLED(1, this.value)">
                 </div>
                 <div class="boxled">
                     <h2>LED3</h2>
-                    <input type="range" id="ledSlider" min="0" max="1023" value="0" oninput="updateLED(2, this.value)">
+                    <input type="range" id="led3" min="0" max="1023" value="0" oninput="updateLED(2, this.value)">
                 </div>
                 <div class="boxled">
                     <h2>LED4</h2>
-                    <input type="range" id="ledSlider" min="0" max="1023" value="0" oninput="updateLED(3, this.value)">
+                    <input type="range" id="led4" min="0" max="1023" value="0" oninput="updateLED(3, this.value)">
                 </div>
                 <div class="boxled">
                     <h2>LED5</h2>
-                    <input type="range" id="ledSlider" min="0" max="1023" value="0" oninput="updateLED(4, this.value)">
+                    <input type="range" id="led5" min="0" max="1023" value="0" oninput="updateLED(4, this.value)">
                 </div> 
                 </center>
             </div>   
@@ -95,15 +95,15 @@
     </div>
     <center> 
                 <div>
-                    <a href="index.html">
+                    <a href="https://davideconfi.github.io/growbox/">
                     <button class="btn off">HOME</button>
                 </a>
-                <!-- </div>        
+                 </div>        
                 <div class="status">
                     <h3>Datos del Sensor</h3>
                     <p>🌡️ Temperatura: <span id="temp">--</span> °C</p>
                     <p>💧 Humedad: <span id="hum">--</span> %</p>
-                </div>      -->
+                </div>      
     </center>
     <script>
 
@@ -128,7 +128,7 @@
         fetch(`/pwm?led=${led}&value=${value}`);
         }, 100); 
     }    
-    /* function fetchSensorData() {
+     function fetchSensorData() {
         fetch("/status")
             .then(response => response.json())
             .then(data => {
@@ -136,12 +136,12 @@
                 document.getElementById("hum").textContent = data.hum.toFixed(1);
             })
             .catch(err => {
-                console.warn("Errore dati sensore:", err);
+                console.warn("Error datos sensor:", err);
             });
     }
     setInterval(fetchSensorData, 100); // actualiza cada 5 segundos
     window.onload = fetchSensorData; // actualiza al cargar la página
- */
+ 
             </script>
     </body>
     </html>
