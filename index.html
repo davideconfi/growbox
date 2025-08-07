@@ -53,11 +53,11 @@
   <button class="btn btn-warning" onclick="register()">Registrar</button>
 </div>
 </center>
-                    <a href="paginaManual.html">
+                    <a href="http://davideconfi.github.io/growbox/paginaManual.html">
                         <button class="btn auto">MANUAL</button>
                       </a>
                       
-                    <a href="paginaAutomatico.html"> 
+                    <a href="http://davideconfi.github.io/growbox/paginaAutomatico.html"> 
                         <button class="btn man" >AUTOMATICA</button>
                     </a> 
                     
@@ -153,7 +153,7 @@ function login() {
     if (savedHash && savedHash === hash(pass)) {
         localStorage.setItem("auth", "true");
         localStorage.setItem("current_user", user);
-        window.location.href = "paginaManual.html";
+        window.location.href = "davideconfi.github.io/growbox/index.html"; 
     } else {
         alert("Credenziali non valide");
     }
