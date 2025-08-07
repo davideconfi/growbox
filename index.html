@@ -61,54 +61,18 @@
                         <button class="btn man" >AUTOMATICA</button>
                     </a> 
                     
-<div class="box">
-  <h2>Accedi al sistema</h2>
-  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
-  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
-  <button class="btn btn-success" onclick="login()">Entrar</button>
-</div>
-<div class="box">
-  <h2>Oppure registrati</h2>
-  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
-  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
-  <button class="btn btn-warning" onclick="register()">Registrar</button>
-</div>
-</center>
+
                 </div>
                 <div class="status">
                 <center><h2><strong> Datos del Sensor</strong></h2>
-<div class="box">
-  <h2>Accedi al sistema</h2>
-  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
-  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
-  <button class="btn btn-success" onclick="login()">Entrar</button>
-</div>
-<div class="box">
-  <h2>Oppure registrati</h2>
-  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
-  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
-  <button class="btn btn-warning" onclick="register()">Registrar</button>
-</div>
-</center>
+
 
                     <h3>🌡️ Temperatura: <span id="temp">--</span> °C</h3>
                     <h3>💧 Humedad: <span id="hum">--</span> %</h3>
                 </div>
                 
     
-<div class="box">
-  <h2>Accedi al sistema</h2>
-  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
-  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
-  <button class="btn btn-success" onclick="login()">Entrar</button>
-</div>
-<div class="box">
-  <h2>Oppure registrati</h2>
-  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
-  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
-  <button class="btn btn-warning" onclick="register()">Registrar</button>
-</div>
-</center>
+
     <script>
          function fetchSensorData() {
             fetch("/status")
@@ -162,4 +126,5 @@ function login() {
 
 </body>
 </html>
+
 
