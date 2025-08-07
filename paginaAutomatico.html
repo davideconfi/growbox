@@ -28,6 +28,15 @@
         .auto { background-color: #6309f4; color: white; }
         .man { background-color: #c0392b; color: white; }
     </style>
+
+<script>
+window.onload = () => {
+    if (localStorage.getItem("auth") !== "true") {
+        window.location.href = "index.html";
+    }
+}
+</script>
+
 </head>
 <body>
     <center>
@@ -76,5 +85,32 @@
         }
         
     </script>
-    </body>
+    
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+const options = {
+  connectTimeout: 4000,
+  clientId: 'webclient_' + Math.floor(Math.random() * 10000),
+  username: 'growstationRadio',
+  password: 'Mqtt125',
+  clean: true,
+};
+
+const WebSocket_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+const client = mqtt.connect(WebSocket_URL, options);
+
+client.on('connect', () => {
+  console.log("✅ MQTT connesso");
+  client.subscribe('growbox/stato', err => {
+    if (err) console.error(err);
+  });
+});
+
+client.on('message', (topic, message) => {
+  const payload = JSON.parse(message.toString());
+  console.log("MQTT message:", topic, payload);
+});
+</script>
+
+</body>
     </html>
