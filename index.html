@@ -39,7 +39,20 @@
                 <h1><strong>Bienvenidos al GrowBox Control</strong></h1>
                 </div>
                 <div class="box">
-                    <center><h2><strong> ELEGIR MODALIDAD</strong></h2></center>
+                    <center><h2><strong> ELEGIR MODALIDAD</strong></h2>
+<div class="box">
+  <h2>Accedi al sistema</h2>
+  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
+  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
+  <button class="btn btn-success" onclick="login()">Entrar</button>
+</div>
+<div class="box">
+  <h2>Oppure registrati</h2>
+  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
+  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
+  <button class="btn btn-warning" onclick="register()">Registrar</button>
+</div>
+</center>
                     <a href="paginaManual.html">
                         <button class="btn auto">MANUAL</button>
                       </a>
@@ -47,16 +60,55 @@
                     <a href="paginaAutomatico.html"> 
                         <button class="btn man" >AUTOMATICA</button>
                     </a> 
-                    </center>
+                    
+<div class="box">
+  <h2>Accedi al sistema</h2>
+  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
+  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
+  <button class="btn btn-success" onclick="login()">Entrar</button>
+</div>
+<div class="box">
+  <h2>Oppure registrati</h2>
+  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
+  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
+  <button class="btn btn-warning" onclick="register()">Registrar</button>
+</div>
+</center>
                 </div>
                 <div class="status">
-                <center><h2><strong> Datos del Sensor</strong></h2></center>
+                <center><h2><strong> Datos del Sensor</strong></h2>
+<div class="box">
+  <h2>Accedi al sistema</h2>
+  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
+  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
+  <button class="btn btn-success" onclick="login()">Entrar</button>
+</div>
+<div class="box">
+  <h2>Oppure registrati</h2>
+  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
+  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
+  <button class="btn btn-warning" onclick="register()">Registrar</button>
+</div>
+</center>
 
                     <h3>🌡️ Temperatura: <span id="temp">--</span> °C</h3>
                     <h3>💧 Humedad: <span id="hum">--</span> %</h3>
                 </div>
                 
-    </center>
+    
+<div class="box">
+  <h2>Accedi al sistema</h2>
+  <input type="text" id="loginUser" placeholder="Usuario" class="form-control mb-2">
+  <input type="password" id="loginPass" placeholder="Contraseña" class="form-control mb-2">
+  <button class="btn btn-success" onclick="login()">Entrar</button>
+</div>
+<div class="box">
+  <h2>Oppure registrati</h2>
+  <input type="text" id="registerUser" placeholder="Nuevo usuario" class="form-control mb-2">
+  <input type="password" id="registerPass" placeholder="Nueva contraseña" class="form-control mb-2">
+  <button class="btn btn-warning" onclick="register()">Registrar</button>
+</div>
+</center>
     <script>
          function fetchSensorData() {
             fetch("/status")
@@ -73,5 +125,40 @@
         setInterval(fetchSensorData, 500); // aggiorna ogni 5 secondi
         window.onload = fetchSensorData; // aggiorna all’avvio 
     </script>
+
+<script>
+function hash(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
+function register() {
+    const user = document.getElementById("registerUser").value;
+    const pass = document.getElementById("registerPass").value;
+    if (!user || !pass) {
+        alert("Compila entrambi i campi");
+        return;
+    }
+    if (localStorage.getItem("user_" + user)) {
+        alert("Utente già esistente");
+        return;
+    }
+    localStorage.setItem("user_" + user, hash(pass));
+    alert("Registrazione completata.");
+}
+
+function login() {
+    const user = document.getElementById("loginUser").value;
+    const pass = document.getElementById("loginPass").value;
+    const savedHash = localStorage.getItem("user_" + user);
+    if (savedHash && savedHash === hash(pass)) {
+        localStorage.setItem("auth", "true");
+        localStorage.setItem("current_user", user);
+        window.location.href = "paginaManual.html";
+    } else {
+        alert("Credenziali non valide");
+    }
+}
+</script>
+
 </body>
 </html>
