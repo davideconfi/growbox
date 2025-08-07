@@ -54,7 +54,10 @@
       if (savedHash && savedHash === hash(pass)) {
         localStorage.setItem("auth", "true");
         localStorage.setItem("current_user", user);
-        window.location.href = "https://github.com/davideconfi/growbox/blob/014489884f424253434065dbe5e54ec1f329de9b/index.html";
+// Redireziona dinamicamente nella stessa cartella
+const currentPath = window.location.pathname;
+const basePath = currentPath.substring(0, currentPath.lastIndexOf("/")+1);
+window.location.href = basePath + "index.html";
       } else {
         alert("Credenziali non valide");
       }
