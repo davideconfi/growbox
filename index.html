@@ -153,7 +153,7 @@ function login() {
     if (savedHash && savedHash === hash(pass)) {
         localStorage.setItem("auth", "true");
         localStorage.setItem("current_user", user);
-        window.location.href = "davideconfi.github.io/growbox/index.html"; 
+        window.location.href = "http://davideconfi.github.io/growbox/index.html"; 
     } else {
         alert("Credenziali non valide");
     }
@@ -162,3 +162,4 @@ function login() {
 
 </body>
 </html>
+
