@@ -47,91 +47,83 @@
     <p class="muted">Riceve JSON da <code>growstation/sensor</code> es. {"temp":24.3, "hum":55.1}</p>
   </div>
 
-  <script>
-    // ==== CONFIGURA QUI (se serve) ====
-    const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
-    const MQTT_OPTIONS = {
-      connectTimeout: 5000,
-      clientId: 'web_'+Math.random().toString(16).slice(2),
-      username: 'growstationRadio', // <- sostituisci se necessario
-      password: 'Mqtt2025',          // <- sostituisci se necessario
-      clean: true,
-    };
+<script>
+  // === CONFIG ===
+  const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+  const MQTT_OPTIONS = {
+    connectTimeout: 5000,
+    clientId: 'web_'+Math.random().toString(16).slice(2),
+    username: 'growstationRadio',
+    password: 'Mqtt2025',
+    clean: true,
+  };
 
-    // Topic
-    const TOPIC_SENSOR  = 'growstation/sensor';        // backend PUB → frontend SUB
-    const TOPIC_CONTROL_L1 = 'growstation/control/led1';  // backend SUB → frontend PUB
-    const TOPIC_CONTROL_L2 = 'growstation/control/led2';  // backend SUB → frontend PUB
+  const TOPIC_SENSOR     = 'growstation/sensor';
+  const TOPIC_CONTROL_L1 = 'growstation/control/led1';
+  const TOPIC_CONTROL_L2 = 'growstation/control/led2';
 
-    // ==== CONNESSIONE MQTT ====
-    const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
-    const connEl = document.getElementById('conn_state');
+  // === CONNESSIONE MQTT ===
+  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+  const connEl = document.getElementById('conn_state');
 
-    client.on('connect', () => {
-      connEl.textContent = 'connesso';
-      connEl.classList.remove('err');
-      connEl.classList.add('ok');
-      // Abbonati ai dati sensore (status)
-      client.subscribe(TOPIC_SENSOR, { qos: 1 }, (err) => {
-        if (err) console.warn('Subscribe error', err);
-      });
-    });
+  client.on('connect', () => {
+    connEl.textContent = 'connesso';
+    connEl.classList.remove('err');
+    connEl.classList.add('ok');
+    client.subscribe(TOPIC_SENSOR, { qos: 1 });
+  });
 
-    client.on('reconnect', () => {
-      connEl.textContent = 'riconnessione…';
-      connEl.classList.remove('ok');
-      connEl.classList.add('err');
-    });
+  client.on('close', () => {
+    connEl.textContent = 'disconnesso';
+    connEl.classList.remove('ok');
+    connEl.classList.add('err');
+  });
 
-    client.on('close', () => {
-      connEl.textContent = 'disconnesso';
-      connEl.classList.remove('ok');
-      connEl.classList.add('err');
-    });
+  client.on('error', (e) => console.error('MQTT error', e));
 
-    client.on('error', (e) => {
-      console.error('MQTT error', e);
-    });
+  // === RICEZIONE SENSORI ===
+  const tempEl = document.getElementById('temp');
+  const humEl  = document.getElementById('hum');
 
-    // ==== RICEZIONE SENSORI ====
-    const tempEl = document.getElementById('temp');
-    const humEl  = document.getElementById('hum');
-
-    client.on('message', (topic, payload) => {
-      if (topic !== TOPIC_SENSOR) return;
+  client.on('message', (topic, payload) => {
+    if (topic === TOPIC_SENSOR) {
       try {
         const data = JSON.parse(payload.toString());
         if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
         if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
       } catch (err) {
-        console.warn('Payload non JSON o non valido:', payload?.toString());
+        console.warn('Payload non valido:', payload?.toString());
       }
-    });
-
-    // ==== CONTROLLO LED (publish) ====
-    const ledRange = {led1:document.getElementById('led1Range')};
-    const led2Range = { led2:document.getElementById('led2Range')
-    const ledOut   = {led1:document.getElementById('led1Val')};
-    const led2Out   = {led2:document.getElementById('led2Val')
-
-    let t;
-    const DEBOUNCE_MS = 120; // evita di inondare il broker durante lo slide
-
-    function publishPWM(val) {
-      if (!client.connected) return; // opzionale: potresti mettere una coda
-      client.publish(TOPIC_CONTROL_L1, String(val), { qos: 1, retain: false });
-            client.publish(TOPIC_CONTROL_L2, String(val), { qos: 1, retain: false });
-
-    } 
-
-    function handleRangeInput(e) {
-      const v = parseInt(e.target.value, 10) || 0;
-      ledOut.textContent = v;
-      if (t) clearTimeout(t);
-      t = setTimeout(() => publishPWM(v), DEBOUNCE_MS);
     }
+  });
 
-    ledRange.addEventListener('input', handleRangeInput);
-  </script>
+  // === CONTROLLO LED ===
+  const led1Range = document.getElementById('led1Range');
+  const led1Out   = document.getElementById('led1Val');
+  const led2Range = document.getElementById('led2Range');
+  const led2Out   = document.getElementById('led2Val');
+
+  const DEBOUNCE_MS = 120;
+  let t1, t2;
+
+  led1Range.addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10) || 0;
+    led1Out.textContent = v;
+    clearTimeout(t1);
+    t1 = setTimeout(() => {
+      if (client.connected) client.publish(TOPIC_CONTROL_L1, String(v), { qos: 1, retain: false });
+    }, DEBOUNCE_MS);
+  });
+
+  led2Range.addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10) || 0;
+    led2Out.textContent = v;
+    clearTimeout(t2);
+    t2 = setTimeout(() => {
+      if (client.connected) client.publish(TOPIC_CONTROL_L2, String(v), { qos: 1, retain: false });
+    }, DEBOUNCE_MS);
+  });
+</script>
+
 </body>
 </html>
