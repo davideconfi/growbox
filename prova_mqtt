@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Growstation – Controllo LED (solo MQTT)</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    .card { max-width: 560px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+    .row { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+    .muted { color: #6b7280; font-size: 14px; }
+    .big { font-size: 32px; font-weight: 700; }
+    .ok { color: #10b981; }
+    .err { color: #ef4444; }
+    input[type="range"] { width: 100%; }
+    code { background: #f3f4f6; padding: 0 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Growstation – Frontend solo MQTT</h2>
+    <div id="conn" class="muted">Stato connessione: <span id="conn_state" class="err">disconnesso</span></div>
+
+    <hr />
+
+    <h3>Controllo LED (PWM)</h3>
+    <div class="row">
+      <label for="led1Range">LED1 PWM</label>
+      <input id="led1Range" type="range" min="0" max="1023" step="1" value="0" />
+      <output id="led1Val">0</output>
+    </div>
+    <p class="muted">Pubblica su topic <code>growstation/control/led1</code> il valore 0–1023.</p>
+
+    <hr />
+
+    <h3>Dati Sensore (DHT22)</h3>
+    <div class="row"><div>Temperatura</div><div class="big" id="temp">--.- °C</div></div>
+    <div class="row"><div>Umidità</div><div class="big" id="hum">--.- %</div></div>
+    <p class="muted">Riceve JSON da <code>growstation/sensor</code> es. {"temp":24.3, "hum":55.1}</p>
+  </div>
+
+  <script>
+    // ==== CONFIGURA QUI (se serve) ====
+    const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+    const MQTT_OPTIONS = {
+      connectTimeout: 5000,
+      clientId: 'web_'+Math.random().toString(16).slice(2),
+      username: 'growstationRadio', // <- sostituisci se necessario
+      password: 'Mqtt125',          // <- sostituisci se necessario
+      clean: true,
+    };
+
+    // Topic
+    const TOPIC_SENSOR  = 'growstation/sensor';        // backend PUB → frontend SUB
+    const TOPIC_CONTROL = 'growstation/control/led1';  // backend SUB → frontend PUB
+
+    // ==== CONNESSIONE MQTT ====
+    const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+    const connEl = document.getElementById('conn_state');
+
+    client.on('connect', () => {
+      connEl.textContent = 'connesso';
+      connEl.classList.remove('err');
+      connEl.classList.add('ok');
+      // Abbonati ai dati sensore (status)
+      client.subscribe(TOPIC_SENSOR, { qos: 1 }, (err) => {
+        if (err) console.warn('Subscribe error', err);
+      });
+    });
+
+    client.on('reconnect', () => {
+      connEl.textContent = 'riconnessione…';
+      connEl.classList.remove('ok');
+      connEl.classList.add('err');
+    });
+
+    client.on('close', () => {
+      connEl.textContent = 'disconnesso';
+      connEl.classList.remove('ok');
+      connEl.classList.add('err');
+    });
+
+    client.on('error', (e) => {
+      console.error('MQTT error', e);
+    });
+
+    // ==== RICEZIONE SENSORI ====
+    const tempEl = document.getElementById('temp');
+    const humEl  = document.getElementById('hum');
+
+    client.on('message', (topic, payload) => {
+      if (topic !== TOPIC_SENSOR) return;
+      try {
+        const data = JSON.parse(payload.toString());
+        if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
+        if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
+      } catch (err) {
+        console.warn('Payload non JSON o non valido:', payload?.toString());
+      }
+    });
+
+    // ==== CONTROLLO LED (publish) ====
+    const ledRange = document.getElementById('led1Range');
+    const ledOut   = document.getElementById('led1Val');
+
+    let t;
+    const DEBOUNCE_MS = 120; // evita di inondare il broker durante lo slide
+
+    function publishPWM(val) {
+      if (!client.connected) return; // opzionale: potresti mettere una coda
+      client.publish(TOPIC_CONTROL, String(val), { qos: 1, retain: false });
+    }
+
+    function handleRangeInput(e) {
+      const v = parseInt(e.target.value, 10) || 0;
+      ledOut.textContent = v;
+      if (t) clearTimeout(t);
+      t = setTimeout(() => publishPWM(v), DEBOUNCE_MS);
+    }
+
+    ledRange.addEventListener('input', handleRangeInput);
+  </script>
+</body>
+</html>
