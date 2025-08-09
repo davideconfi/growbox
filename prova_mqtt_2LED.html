@@ -32,7 +32,7 @@
       <output id="led1Val">0</output>
     </div>
     <p class="muted">Pubblica su topic <code>growstation/control/led1</code> il valore 0–1023.</p>
-          <hr />
+    <hr />
     <div class="row">
       <label for="led2Range">LED2 PWM</label>
       <input id="led2Range" type="range" min="0" max="1023" step="1" value="0" />
@@ -109,16 +109,20 @@
     });
 
     // ==== CONTROLLO LED (publish) ====
-    const ledRange = {led1:document.getElementById('led1Range'), led2:document.getElementById('led2Range')};
-    const ledOut   = {led1:document.getElementById('led1Val'), led2:document.getElementById('led2Val')};
+    const ledRange = {led1:document.getElementById('led1Range')};
+    const led2Range = { led2:document.getElementById('led2Range')
+    const ledOut   = {led1:document.getElementById('led1Val')};
+    const led2Out   = {led2:document.getElementById('led2Val')
 
     let t;
     const DEBOUNCE_MS = 120; // evita di inondare il broker durante lo slide
 
     function publishPWM(val) {
       if (!client.connected) return; // opzionale: potresti mettere una coda
-      client.publish(TOPIC_CONTROL_L1, String(val), { qos: 1, retain: false }, TOPIC_CONTROL_L2, String(val), { qos: 1, retain: false });
-    }
+      client.publish(TOPIC_CONTROL_L1, String(val), { qos: 1, retain: false });
+            client.publish(TOPIC_CONTROL_L2, String(val), { qos: 1, retain: false });
+
+    } 
 
     function handleRangeInput(e) {
       const v = parseInt(e.target.value, 10) || 0;
