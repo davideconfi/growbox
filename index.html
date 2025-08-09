@@ -54,13 +54,11 @@
                 <div class="status">
                 <center><h2><strong> Datos del Sensor</strong></h2>
 
-
                     <h3>🌡️ Temperatura: <span id="temp">--</span> °C</h3>
                     <h3>💧 Humedad: <span id="hum">--</span> %</h3>
                 </div>
                 
     
-
     <script>
          function fetchSensorData() {
             fetch("/status")
@@ -77,43 +75,4 @@
         setInterval(fetchSensorData, 500); // aggiorna ogni 5 secondi
         window.onload = fetchSensorData; // aggiorna all’avvio 
     </script>
-
-<script>
-function hash(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-}
-
-function register() {
-    const user = document.getElementById("registerUser").value;
-    const pass = document.getElementById("registerPass").value;
-    if (!user || !pass) {
-        alert("Compila entrambi i campi");
-        return;
-    }
-    if (localStorage.getItem("user_" + user)) {
-        alert("Utente già esistente");
-        return;
-    }
-    localStorage.setItem("user_" + user, hash(pass));
-    alert("Registrazione completata.");
-}
-
-function login() {
-    const user = document.getElementById("loginUser").value;
-    const pass = document.getElementById("loginPass").value;
-    const savedHash = localStorage.getItem("user_" + user);
-    if (savedHash && savedHash === hash(pass)) {
-        localStorage.setItem("auth", "true");
-        localStorage.setItem("current_user", user);
-        window.location.href = "http://davideconfi.github.io/growbox/index.html"; 
-    } else {
-        alert("Credenziali non valide");
-    }
-}
-</script>
-
-</body>
-</html>
-
-
 
