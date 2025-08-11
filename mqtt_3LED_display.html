@@ -79,7 +79,7 @@
     connEl.textContent = 'connesso';
     connEl.classList.remove('err');
     connEl.classList.add('ok');
-    client.subscribe(TOPIC_SENSOR, { qos: 1 });
+    client.subscribe(TOPIC_SENSOR_DHT22, { qos: 1 });
   });
 
   client.on('close', () => {
