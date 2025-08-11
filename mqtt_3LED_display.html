@@ -102,12 +102,11 @@
   const humEl  = document.getElementById('hum');
   const hum_sueloEl = document.getElementById('humedad_suelo');
   client.on('message', (topic, payload) => {
-    if (topic === TOPIC_SENSOR_DHT22 || topic === TOPIC_SENSOR_SOIL) {
+    if (topic === TOPIC_SENSOR_DHT22) {
       try {
         const data = JSON.parse(payload.toString());
         if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
         if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
-        if (typeof data.humedad_suelo  === 'number') humedad_sueloEl.textContent  = data.humedad_suelo.toFixed(1)+' %';
 
       } catch (err) {
         console.warn('Payload non valido:', payload?.toString());
