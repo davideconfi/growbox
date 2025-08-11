@@ -1,0 +1,157 @@
+
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Growstation – Controllo LED (solo MQTT)</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    .card { max-width: 560px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+    .row { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+    .muted { color: #6b7280; font-size: 14px; }
+    .big { font-size: 32px; font-weight: 700; }
+    .ok { color: #10b981; }
+    .err { color: #ef4444; }
+    input[type="range"] { width: 100%; }
+    code { background: #f3f4f6; padding: 0 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Growstation – Frontend solo MQTT</h2>
+    <div id="conn" class="muted">Stato connessione: <span id="conn_state" class="err">disconnesso</span></div>
+
+    <hr />
+
+    <h3>Controllo LED (PWM)</h3>
+    <div class="row">
+      <label for="led1Range">LED1 PWM</label>
+      <input id="led1Range" type="range" min="0" max="1023" step="1" value="0" />
+      <output id="led1Val">0</output>
+    </div>
+    <p class="muted">Pubblica su topic <code>growstation/control/led1</code> il valore 0–1023.</p>
+    <hr />
+    <div class="row">
+      <label for="led2Range">LED2 PWM</label>
+      <input id="led2Range" type="range" min="0" max="1023" step="1" value="0" />
+      <output id="led2Val">0</output>
+    </div>
+    <p class="muted">Pubblica su topic <code>growstation/control/led2</code> il valore 0–1023.</p>
+    <hr />
+    <div class="row">
+      <label for="led3Range">LED3 PWM</label>
+      <input id="led3Range" type="range" min="0" max="1023" step="1" value="0" />
+      <output id="led3Val">0</output>
+    </div>
+    <p class="muted">Pubblica su topic <code>growstation/control/led3</code> il valore 0–1023.</p>
+    <hr />
+    <div class="card">
+
+    <h3>Dati Sensore (DHT22)</h3>
+    <div class="row"><div>Temperatura</div><div class="big" id="temp">--.- °C</div></div>
+    <div class="row"><div>Umidità</div><div class="big" id="hum">--.- %</div></div>
+    <p class="muted">Riceve JSON da <code>growstation/sensor/dht22</code> </p>
+  </div>
+      <hr />
+    <div class="card">
+    <h3>Dati Sensore (SOIL MOISTURE)</h3>
+    <div class="row"><div>Umidità del suolo</div><div class="big" id="humedad_suelo">--.- %</div></div>
+    <p class="muted">Riceve JSON da <code>growstation/sensor/humedad_suelo</code> </p>
+  </div>
+
+<script>
+  // === CONFIG ===
+  const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+  const MQTT_OPTIONS = {
+    connectTimeout: 5000,
+    clientId: 'web_'+Math.random().toString(16).slice(2),
+    username: 'growstationRadio',
+    password: 'Mqtt2025',
+    clean: true,
+  };
+
+  const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
+  const TOPIC_SENSOR_SOIL = 'growstation/sensor/humedad_suelo';
+  const TOPIC_CONTROL_L1 = 'growstation/control/led1';
+  const TOPIC_CONTROL_L2 = 'growstation/control/led2';
+  const TOPIC_CONTROL_L3 = 'growstation/control/led3';
+  // === CONNESSIONE MQTT ===
+  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+  const connEl = document.getElementById('conn_state');
+
+  client.on('connect', () => {
+    connEl.textContent = 'connesso';
+    connEl.classList.remove('err');
+    connEl.classList.add('ok');
+    client.subscribe(TOPIC_SENSOR, { qos: 1 });
+  });
+
+  client.on('close', () => {
+    connEl.textContent = 'disconnesso';
+    connEl.classList.remove('ok');
+    connEl.classList.add('err');
+  });
+
+  client.on('error', (e) => console.error('MQTT error', e));
+
+  // === RICEZIONE SENSORI ===
+  const tempEl = document.getElementById('temp');
+  const humEl  = document.getElementById('hum');
+  const hum_sueloEl = document.getElementById('humedad_suelo');
+  client.on('message', (topic, payload) => {
+    if (topic === TOPIC_SENSOR_DHT22 || topic === TOPIC_SENSOR_SOIL) {
+      try {
+        const data = JSON.parse(payload.toString());
+        if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
+        if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
+        if (typeof data.humedad_suelo  === 'number') humedad_sueloEl.textContent  = data.humedad_suelo.toFixed(1)+' %';
+
+      } catch (err) {
+        console.warn('Payload non valido:', payload?.toString());
+      }
+    }
+  });
+
+  // === CONTROLLO LED ===
+  const led1Range = document.getElementById('led1Range');
+  const led1Out   = document.getElementById('led1Val');
+  const led2Range = document.getElementById('led2Range');
+  const led2Out   = document.getElementById('led2Val');
+  const led3Range = document.getElementById('led3Range');
+  const led3Out   = document.getElementById('led3Val');
+
+  const DEBOUNCE_MS = 120;
+  let t1, t2;
+
+  led1Range.addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10) || 0;
+    led1Out.textContent = v;
+    clearTimeout(t1);
+    t1 = setTimeout(() => {
+      if (client.connected) client.publish(TOPIC_CONTROL_L1, String(v), { qos: 1, retain: false });
+    }, DEBOUNCE_MS);
+  });
+
+  led2Range.addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10) || 0;
+    led2Out.textContent = v;
+    clearTimeout(t2);
+    t2 = setTimeout(() => {
+      if (client.connected) client.publish(TOPIC_CONTROL_L2, String(v), { qos: 1, retain: false });
+    }, DEBOUNCE_MS);
+  });
+  led3Range.addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10) || 0;
+    led3Out.textContent = v;
+    clearTimeout(t3);
+    t3 = setTimeout(() => {
+      if (client.connected) client.publish(TOPIC_CONTROL_L3, String(v), { qos: 1, retain: false });
+    }, DEBOUNCE_MS);
+  });
+</script>
+
+</body>
+</html>
