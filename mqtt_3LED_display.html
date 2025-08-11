@@ -54,13 +54,7 @@
     <div class="row"><div>Temperatura</div><div class="big" id="temp">--.- °C</div></div>
     <div class="row"><div>Umidità</div><div class="big" id="hum">--.- %</div></div>
     <p class="muted">Riceve JSON da <code>growstation/sensor/dht22</code> </p>
-  </div>
-      <hr />
-    <div class="card">
-    <h3>Dati Sensore (SOIL MOISTURE)</h3>
-    <div class="row"><div>Umidità del suolo</div><div class="big" id="humedad_suelo">--.- %</div></div>
-    <p class="muted">Riceve JSON da <code>growstation/sensor/humedad_suelo</code> </p>
-  </div>
+  
 
 <script>
   // === CONFIG ===
@@ -74,7 +68,6 @@
   };
 
   const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
-  const TOPIC_SENSOR_SOIL = 'growstation/sensor/humedad_suelo';
   const TOPIC_CONTROL_L1 = 'growstation/control/led1';
   const TOPIC_CONTROL_L2 = 'growstation/control/led2';
   const TOPIC_CONTROL_L3 = 'growstation/control/led3';
@@ -100,7 +93,6 @@
   // === RICEZIONE SENSORI ===
   const tempEl = document.getElementById('temp');
   const humEl  = document.getElementById('hum');
-  const hum_sueloEl = document.getElementById('humedad_suelo');
   client.on('message', (topic, payload) => {
     if (topic === TOPIC_SENSOR_DHT22) {
       try {
