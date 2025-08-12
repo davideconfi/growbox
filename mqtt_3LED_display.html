@@ -87,7 +87,7 @@
     connEl.textContent = 'connesso';
     connEl.classList.remove('err');
     connEl.classList.add('ok');
-    client.subscribe(TOPIC_SENSOR_DHT22, { qos: 1 });
+    client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK] { qos: 1 });
   });
 
   client.on('close', () => {
@@ -101,33 +101,29 @@
   // === RICEZIONE SENSORI ===
   const tempEl = document.getElementById('temp');
   const humEl  = document.getElementById('hum');
-  client.on('message', (topic, payload) => {
-    if (topic === TOPIC_SENSOR_DHT22) {
-      try {
-        const data = JSON.parse(payload.toString());
-        if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
-        if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
-
-      } catch (err) {
-        console.warn('Payload non valido:', payload?.toString());
-      }
-    }
-  });
-
-  const dataEl = document.getElementById('data');
+   const dataEl = document.getElementById('data');
   const oraEl  = document.getElementById('ora');
-  client.on('message', (topic, payload_clock) => {
-    if (topic === TOPIC_CLOCK) {
-      try {
-        const data = JSON.parse(payload_clock.toString());
-        if (typeof data.data === 'number') dataEl.textContent = data.data.toFixed(1);
-        if (typeof data.ora  === 'number') oraEl.textContent  = data.ora.toFixed(1);
+  
+  client.on('message', (topic, payload) => {
+  try {
+    const msg = JSON.parse(payload.toString());
 
-      } catch (err) {
-        console.warn('Payload non valido:', payload_clock?.toString());
-      }
+    if (topic === TOPIC_SENSOR_DHT22) {
+      if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
+      if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
     }
-  });
+
+    if (topic === TOPIC_CLOCK) {
+      // qui ci aspettiamo stringhe
+      if (typeof msg.data === 'string') dataEl.textContent = msg.data;
+      if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
+    }
+
+  } catch (err) {
+    console.warn('Payload non valido:', payload?.toString());
+  }
+});
+
 
   // === CONTROLLO LED ===
   const led1Range = document.getElementById('led1Range');
