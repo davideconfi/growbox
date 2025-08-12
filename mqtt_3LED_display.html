@@ -74,6 +74,47 @@
     clean: true,
   };
 
+<script>
+  const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+
+  const MQTT_OPTIONS = {
+    protocol: 'wss',
+    protocolVersion: 4,
+    username: 'growstationRadio',      // <-- verifica in Access Management > Credentials
+    password: 'Mqtt2025',              // <-- verifica
+    clientId: 'web_' + Math.random().toString(16).slice(2),
+    clean: true,
+    keepalive: 60,
+    reconnectPeriod: 2000,             // tenta ogni 2s
+    connectTimeout: 8000,
+    resubscribe: true,
+    path: '/mqtt',                     // <-- IMPORTANTISSIMO su HiveMQ Cloud
+  };
+
+  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+
+  client.on('connect', (packet) => {
+    console.log('✅ CONNECTED', packet);
+    document.getElementById('conn_state').textContent = 'connesso';
+    client.subscribe(['growstation/sensor/dht22','growstation/clock'], { qos: 1 }, (err, granted) => {
+      if (err) console.error('SUBSCRIBE error:', err);
+      else console.log('SUBSCRIBED:', granted);
+    });
+  });
+
+  client.on('reconnect', () => console.warn('↻ reconnecting...'));
+  client.on('close', () => console.warn('⛔ close'));
+  client.on('end', () => console.warn('🔚 end'));
+  client.on('disconnect', (packet) => console.warn('🔌 disconnect', packet));
+  client.on('offline', () => console.warn('📴 offline'));
+  client.on('error', (err) => console.error('❌ MQTT error:', err));
+
+  // Log dei pacchetti utili a capire dove si ferma il flusso
+  client.on('packetsend', (p) => console.log('➡️ sent', p.cmd, p));
+  client.on('packetreceive', (p) => console.log('⬅️ recv', p.cmd, p));
+
+
+  
   const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
   const TOPIC_CLOCK = 'growstation/clock';
   const TOPIC_CONTROL_L1 = 'growstation/control/led1';
