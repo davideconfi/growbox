@@ -116,15 +116,15 @@
 
   const dataEl = document.getElementById('data');
   const oraEl  = document.getElementById('ora');
-  client.on('message', (topic, payload) => {
+  client.on('message', (topic, payload_clock) => {
     if (topic === TOPIC_CLOCK) {
       try {
-        const data = JSON.parse(payload.toString());
+        const data = JSON.parse(payload_clock.toString());
         if (typeof data.data === 'number') dataEl.textContent = data.data.toFixed(1);
         if (typeof data.ora  === 'number') oraEl.textContent  = data.ora.toFixed(1);
 
       } catch (err) {
-        console.warn('Payload non valido:', payload?.toString());
+        console.warn('Payload non valido:', payload_clock?.toString());
       }
     }
   });
