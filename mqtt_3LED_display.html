@@ -54,7 +54,12 @@
     <div class="row"><div>Temperatura</div><div class="big" id="temp">--.- °C</div></div>
     <div class="row"><div>Umidità</div><div class="big" id="hum">--.- %</div></div>
     <p class="muted">Riceve JSON da <code>growstation/sensor/dht22</code> </p>
-  
+   <div class="card">
+
+    <h3>OROLOGIO</h3>
+    <div class="row"><div>Data</div><div class="big" id="data">--.- °C</div></div>
+    <div class="row"><div>Ora</div><div class="big" id="ora">--.- %</div></div>
+    <p class="muted">Riceve da <code>growstation/clock</code> </p>
 
 <script>
   // === CONFIG ===
@@ -68,6 +73,7 @@
   };
 
   const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
+  const TOPIC_CLOCK = 'growstation/clock';
   const TOPIC_CONTROL_L1 = 'growstation/control/led1';
   const TOPIC_CONTROL_L2 = 'growstation/control/led2';
   const TOPIC_CONTROL_L3 = 'growstation/control/led3';
@@ -99,6 +105,21 @@
         const data = JSON.parse(payload.toString());
         if (typeof data.temp === 'number') tempEl.textContent = data.temp.toFixed(1)+' °C';
         if (typeof data.hum  === 'number') humEl.textContent  = data.hum.toFixed(1)+' %';
+
+      } catch (err) {
+        console.warn('Payload non valido:', payload?.toString());
+      }
+    }
+  });
+
+  const dataEl = document.getElementById('data');
+  const oraEl  = document.getElementById('ora');
+  client.on('message', (topic, payload) => {
+    if (topic === TOPIC_CLOCK) {
+      try {
+        const data = JSON.parse(payload.toString());
+        if (typeof data.data === 'number') dataEl.textContent = data.data.toFixed(1)+' °C';
+        if (typeof data.ora  === 'number') oraEl.textContent  = data.ora.toFixed(1)+' %';
 
       } catch (err) {
         console.warn('Payload non valido:', payload?.toString());
