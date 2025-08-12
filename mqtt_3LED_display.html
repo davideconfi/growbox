@@ -117,8 +117,8 @@
     if (topic === TOPIC_CLOCK) {
       try {
         const data = JSON.parse(payload.toString());
-        if (typeof data.data === 'number') dataEl.textContent = data.data.toFixed(1)+' °C';
-        if (typeof data.ora  === 'number') oraEl.textContent  = data.ora.toFixed(1)+' %';
+        if (typeof data.data === 'number') dataEl.textContent = data.data.toFixed(1);
+        if (typeof data.ora  === 'number') oraEl.textContent  = data.ora.toFixed(1);
 
       } catch (err) {
         console.warn('Payload non valido:', payload?.toString());
