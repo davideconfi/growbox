@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -49,71 +50,31 @@
     <p class="muted">Pubblica su topic <code>growstation/control/led3</code> il valore 0–1023.</p>
     <hr />
     <div class="card">
+
     <h3>Dati Sensore (DHT22)</h3>
     <div class="row"><div>Temperatura</div><div class="big" id="temp">--.- °C</div></div>
     <div class="row"><div>Umidità</div><div class="big" id="hum">--.- %</div></div>
     <p class="muted">Riceve JSON da <code>growstation/sensor/dht22</code> </p>
-    </div>
-
-       <hr />
+  
+    <hr />
     <div>
     <h3>OROLOGIO</h3>
     <div class="row"><div>Data</div><div class="big" id="data"> --/--/--</div></div>
     <div class="row"><div>Ora</div><div class="big" id="ora"> --:--:--</div></div>
     <p class="muted">Riceve da <code>growstation/clock</code> </p>
     </div>
-
-    <script>
+    
+<script>
   // === CONFIG ===
- // const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
-  //const MQTT_OPTIONS = {
-  //  connectTimeout: 5000,
-   // clientId: 'web_'+Math.random().toString(16).slice(2),
-   // username: 'growstationRadio',
-  //  password: 'Mqtt2025',
-//clean: true,
- // };
-
   const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
-
   const MQTT_OPTIONS = {
-    protocol: 'wss',
-    protocolVersion: 4,
-    username: 'growstationRadio',      // <-- verifica in Access Management > Credentials
-    password: 'Mqtt2025',              // <-- verifica
-    clientId: 'web_' + Math.random().toString(16).slice(2),
+    connectTimeout: 5000,
+    clientId: 'web_'+Math.random().toString(16).slice(2),
+    username: 'growstationRadio',
+    password: 'Mqtt2025',
     clean: true,
-    keepalive: 60,
-    reconnectPeriod: 2000,             // tenta ogni 2s
-    connectTimeout: 8000,
-    resubscribe: true,
-    path: '/mqtt',                     // <-- IMPORTANTISSIMO su HiveMQ Cloud
   };
 
-  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
-
-  client.on('connect', (packet) => {
-    console.log('✅ CONNECTED', packet);
-    document.getElementById('conn_state').textContent = 'connesso';
-    client.subscribe(['growstation/sensor/dht22','growstation/clock'], { qos: 1 }, (err, granted) => {
-      if (err) console.error('SUBSCRIBE error:', err);
-      else console.log('SUBSCRIBED:', granted);
-    });
-  });
-
-  client.on('reconnect', () => console.warn('↻ reconnecting...'));
-  client.on('close', () => console.warn('⛔ close'));
-  client.on('end', () => console.warn('🔚 end'));
-  client.on('disconnect', (packet) => console.warn('🔌 disconnect', packet));
-  client.on('offline', () => console.warn('📴 offline'));
-  client.on('error', (err) => console.error('❌ MQTT error:', err));
-
-  // Log dei pacchetti utili a capire dove si ferma il flusso
-  client.on('packetsend', (p) => console.log('➡️ sent', p.cmd, p));
-  client.on('packetreceive', (p) => console.log('⬅️ recv', p.cmd, p));
-
-
-  
   const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
   const TOPIC_CLOCK = 'growstation/clock';
   const TOPIC_CONTROL_L1 = 'growstation/control/led1';
@@ -127,7 +88,7 @@
     connEl.textContent = 'connesso';
     connEl.classList.remove('err');
     connEl.classList.add('ok');
-    client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK] { qos: 1 });
+    client.subscribe([TOPIC_SENSOR_DHT22,TOPIC_CLOCK],{ qos: 1 });
   });
 
   client.on('close', () => {
@@ -141,29 +102,25 @@
   // === RICEZIONE SENSORI ===
   const tempEl = document.getElementById('temp');
   const humEl  = document.getElementById('hum');
-   const dataEl = document.getElementById('data');
+  const dataEl = document.getElementById('data');
   const oraEl  = document.getElementById('ora');
-  
+
   client.on('message', (topic, payload) => {
-  try {
-    const msg = JSON.parse(payload.toString());
-
-    if (topic === TOPIC_SENSOR_DHT22) {
-      if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
-      if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
-    }
-
-    if (topic === TOPIC_CLOCK) {
-      // qui ci aspettiamo stringhe
-      if (typeof msg.data === 'string') dataEl.textContent = msg.data;
-      if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
-    }
-
-  } catch (err) {
+  let msg;
+  try { msg = JSON.parse(payload.toString()); }
+  catch (err) {
     console.warn('Payload non valido:', payload?.toString());
+    return;
+  }
+
+  if (topic === TOPIC_SENSOR_DHT22) {
+    if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
+    if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
+  } else if (topic === TOPIC_CLOCK) {
+    if (typeof msg.data === 'string') dataEl.textContent = msg.data;
+    if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
   }
 });
-
 
   // === CONTROLLO LED ===
   const led1Range = document.getElementById('led1Range');
