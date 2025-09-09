@@ -64,13 +64,12 @@
     <p class="muted">Riceve JSON da <code>growstation/sensor/dht22</code> </p>
   </div>
     <hr />
-    <div>
+    <div class="card">
     <h3>OROLOGIO</h3>
     <div class="row"><div>Data</div><div class="big" id="data"> --/--/--</div></div>
     <div class="row"><div>Ora</div><div class="big" id="ora"> --:--:--</div></div>
     <p class="muted">Riceve da <code>growstation/clock</code> </p>
     </div>
-        </div>
 
     <hr />
 <h3>Dispositivi</h3>
@@ -155,51 +154,55 @@
 
   client.on('error', (e) => console.error('MQTT error', e));
 
-  // === ELEMENTI UI ===
-  const tempEl = document.getElementById('temp');
-  const humEl  = document.getElementById('hum');
-  const dataEl = document.getElementById('data');
-  const oraEl  = document.getElementById('ora');
+// === ELEMENTI UI ===
+const tempEl = document.getElementById('temp');
+const humEl  = document.getElementById('hum');
+const dataEl = document.getElementById('data');
+const oraEl  = document.getElementById('ora');
 
-  const fanOn  = document.getElementById('fanOn');
-  const fanOff = document.getElementById('fanOff');
-  const irrOn  = document.getElementById('irrOn');
-  const irrOff = document.getElementById('irrOff');
-  const devON = document.getElementById('devOn');
-    const devOff = document.getElementById('devOff');
-  // === RICEZIONE MESSAGGI ===
-  client.on('message', (topic, payload) => {
-    let msg;
-    try { msg = JSON.parse(payload.toString()); }
-    catch (err) {
-      console.warn('Payload non valido:', payload?.toString());
-      return;
-    }
+const fanOn  = document.getElementById('fanOn');
+const fanOff = document.getElementById('fanOff');
+const irrOn  = document.getElementById('irrOn');
+const irrOff = document.getElementById('irrOff');
+const devOn  = document.getElementById('devOn');
+const devOff = document.getElementById('devOff');
 
-    if (topic === TOPIC_SENSOR_DHT22) {
-      if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
-      if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
-    } else if (topic === TOPIC_CLOCK) {
-      if (typeof msg.data === 'string') dataEl.textContent = msg.data;
-      if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
-    } else if (topic === TOPIC_FAN_STATUS) {
-      if (msg && typeof msg.state === 'string') {
-        const on = msg.state.toUpperCase() === 'ON';
-        fanOn .classList.toggle('device-on',  on);
-        fanOff.classList.toggle('device-off', !on);
-      }
-    } else if (topic === TOPIC_IRR_STATUS) {
-      if (msg && typeof msg.state === 'string') {
-        const on = msg.state.toUpperCase() === 'ON';
-        irrOn .classList.toggle('device-on',  on);
-        irrOff.classList.toggle('device-off', !on);
-      }} else if (topic === TOPIC_DEV_STATUS) {
-      if (msg && typeof msg.state === 'string') {
-        const on = msg.state.toUpperCase() === 'ON';
-        irrOn .classList.toggle('device-on',  on);
-        irrOff.classList.toggle('device-off', !on);
+// === RICEZIONE MESSAGGI ===
+client.on('message', (topic, payload) => {
+  let msg;
+  try { msg = JSON.parse(payload.toString()); }
+  catch (err) {
+    console.warn('Payload non valido:', payload?.toString());
+    return;
+  }
+
+  if (topic === TOPIC_SENSOR_DHT22) {
+    if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
+    if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
+  } else if (topic === TOPIC_CLOCK) {
+    if (typeof msg.data === 'string') dataEl.textContent = msg.data;
+    if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
+  } else if (topic === TOPIC_FAN_STATUS) {
+    if (msg && typeof msg.state === 'string') {
+      const on = msg.state.toUpperCase() === 'ON';
+      fanOn .classList.toggle('device-on',  on);
+      fanOff.classList.toggle('device-off', !on);
     }
-  });
+  } else if (topic === TOPIC_IRR_STATUS) {
+    if (msg && typeof msg.state === 'string') {
+      const on = msg.state.toUpperCase() === 'ON';
+      irrOn .classList.toggle('device-on',  on);
+      irrOff.classList.toggle('device-off', !on);
+    }
+  } else if (topic === TOPIC_DEV_STATUS) {
+    if (msg && typeof msg.state === 'string') {
+      const on = msg.state.toUpperCase() === 'ON';
+      devOn .classList.toggle('device-on',  on);
+      devOff.classList.toggle('device-off', !on);
+    }
+  }
+});
+
 
   // === CONTROLLO LED ===
   const led1Range = document.getElementById('led1Range');
@@ -246,12 +249,13 @@
     client.publish(topic, payload, { qos: 1, retain: false });
   }
 
-  fanOn .addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'ON'));
-  fanOff.addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'OFF'));
-  irrOn .addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'ON'));
-  irrOff.addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'OFF'));
-  devOn .addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'ON'));
-  devOff.addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'OFF'));
+fanOn .addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'ON'));
+fanOff.addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'OFF'));
+irrOn .addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'ON'));
+irrOff.addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'OFF'));
+devOn .addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'ON'));
+devOff.addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'OFF'));
+
 </script>
 </body>
 </html>
