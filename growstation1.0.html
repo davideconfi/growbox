@@ -140,7 +140,7 @@
     connEl.classList.add('ok');
 
     client.subscribe(
-      [TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS],
+      [TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS ],
       { qos: 1 }
     );
   });
@@ -164,7 +164,7 @@
   const irrOn  = document.getElementById('irrOn');
   const irrOff = document.getElementById('irrOff');
   const devON = document.getElementById('devOn');
-    const devOff = document.getElementById('idevOff');
+    const devOff = document.getElementById('devOff');
   // === RICEZIONE MESSAGGI ===
   client.on('message', (topic, payload) => {
     let msg;
