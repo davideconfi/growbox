@@ -189,19 +189,20 @@ client.on('message', (topic, payload) => {
       fanOff.classList.toggle('device-off', !on);
     }
   } else if (topic === TOPIC_IRR_STATUS) {
-    if (msg && typeof msg.state === 'string') {
-      const on = msg.state.toUpperCase() === 'ON';
-      irrOn .classList.toggle('device-on',  on);
-      irrOff.classList.toggle('device-off', !on);
-    }
-  } else if (topic === TOPIC_DEV_STATUS) {
-    if (msg && typeof msg.state === 'string') {
-      const on = msg.state.toUpperCase() === 'ON';
-      devOn .classList.toggle('device-on',  on);
-      devOff.classList.toggle('device-off', !on);
-    }
+  if (msg && typeof msg.state === 'string') {
+    const on = msg.state.toUpperCase() === 'ON';
+    irrOn .classList.toggle('device-on',  on);
+    irrOff.classList.toggle('device-off', !on);
   }
+} else if (topic === TOPIC_DEV_STATUS) {
+  if (msg && typeof msg.state === 'string') {
+    const on = msg.state.toUpperCase() === 'ON';
+    devOn .classList.toggle('device-on',  on);
+    devOff.classList.toggle('device-off', !on);
+  }
+}
 });
+
 
 
   // === CONTROLLO LED ===
