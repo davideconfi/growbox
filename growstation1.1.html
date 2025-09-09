@@ -95,6 +95,17 @@
   </div>
 </div>
 
+    <div class="row" style="margin-top:8px">
+  <div>
+    <strong>Altro dispositivo</strong>
+    <div class="muted">Topic: <code>growbox/control/device_ext</code></div>
+  </div>
+  <div>
+    <button id="irrOn"  class="btn btn-on">ON</button>
+    <button id="irrOff" class="btn btn-off">OFF</button>
+  </div>
+</div>
+
 <script>
   // === CONFIG ===
   const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
@@ -116,8 +127,11 @@
   // === TOPIC DISPOSITIVI ===
   const TOPIC_FAN_CTRL     = 'growbox/control/ventilador';
   const TOPIC_IRR_CTRL     = 'growbox/control/irrigation';
+    const TOPIC_DEV_CTRL     = 'growbox/control/device_ext';
   const TOPIC_FAN_STATUS   = 'growbox/status/ventilador';
   const TOPIC_IRR_STATUS   = 'growbox/status/irrigation';
+    const TOPIC_DEV_STATUS   = 'growbox/status/device_ext';
+
   // === TIME SYNC TOPICS ===
   const TOPIC_NEEDS_TIME  = 'growstation/needs/time';
   const TOPIC_CMD_TIME    = 'growstation/cmd/time';
@@ -177,6 +191,8 @@
   const fanOff = document.getElementById('fanOff');
   const irrOn  = document.getElementById('irrOn');
   const irrOff = document.getElementById('irrOff');
+   const devOn  = document.getElementById('devOn');
+  const devOff = document.getElementById('devOff');
 
   // === RICEZIONE MESSAGGI ===
   client.on('message', (topic, payload, packet) => {
@@ -225,6 +241,11 @@
         const on = msg.state.toUpperCase() === 'ON';
         irrOn .classList.toggle('device-on',  on);
         irrOff.classList.toggle('device-off', !on);
+      } else if (topic === TOPIC_DEV_STATUS) {
+      if (msg && typeof msg.state === 'string') {
+        const on = msg.state.toUpperCase() === 'ON';
+        fanOn .classList.toggle('device-on',  on);
+        fanOff.classList.toggle('device-off', !on);
       }
     }
   });
@@ -278,6 +299,8 @@
   fanOff.addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'OFF'));
   irrOn .addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'ON'));
   irrOff.addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'OFF'));
+  devOn .addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'ON'));
+  devOff.addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'OFF'));
 </script>
 </body>
 </html>
