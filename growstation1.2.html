@@ -60,9 +60,6 @@
       max-width: 720px;
       margin: 24px auto;
     }
-
-    /* Badge spacing */
-    .status-badges .badge { margin-left: .5rem; }
   </style>
 </head>
 
@@ -74,12 +71,7 @@
       <div class="col-12 col-lg-10">
         <div class="gs-minicard p-3">
           <h1 class="title mb-2">GrowStation – Frontend MQTT</h1>
-          <div id="conn" class="muted status-badges">
-            Stato connessione:
-            <span id="conn_state" class="err">disconnesso</span>
-            <span id="badge_broker" class="badge rounded-pill bg-danger">Broker offline</span>
-            <span id="badge_device" class="badge rounded-pill bg-secondary">Device sconosciuto</span>
-          </div>
+          <div id="conn" class="muted">Stato connessione: <span id="conn_state" class="err">disconnesso</span></div>
         </div>
       </div>
     </div>
@@ -217,44 +209,18 @@
     // === CONNESSIONE MQTT ===
     const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
     const connEl = document.getElementById('conn_state');
-    const brokerBadge = document.getElementById('badge_broker');
-    const devBadge = document.getElementById('badge_device');
-
-    // Device presence heuristics (no backend change): mark online if any message seen recently
-    let lastSeen = 0;
-    const DEVICE_ONLINE_MS = 8000;   // <=8s → online
-    const DEVICE_AWAY_MS   = 30000;  // 8–30s → assente
-
-    function setBadge(el, text, cls) {
-      el.className = 'badge rounded-pill ' + cls;
-      el.textContent = text;
-    }
-    function touchDeviceSeen() { lastSeen = Date.now(); }
-    function refreshDeviceBadge() {
-      if (!lastSeen) return; // stays "sconosciuto" finché non vediamo messaggi
-      const delta = Date.now() - lastSeen;
-      if (delta <= DEVICE_ONLINE_MS)      setBadge(devBadge, 'Device online', 'bg-success');
-      else if (delta <= DEVICE_AWAY_MS)   setBadge(devBadge, `Assente ${Math.round(delta/1000)}s`, 'bg-warning text-dark');
-      else                                setBadge(devBadge, 'Device offline', 'bg-danger');
-    }
-    setInterval(refreshDeviceBadge, 1000);
     client.on('connect', () => {
       connEl.textContent = 'connesso';
       connEl.classList.remove('err');
       connEl.classList.add('ok');
-      // Broker badge
-      setBadge(brokerBadge, 'Broker online', 'bg-success');
 
       client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS], { qos: 1 });
-    });
     });
 
     client.on('close', () => {
       connEl.textContent = 'disconnesso';
       connEl.classList.remove('ok');
       connEl.classList.add('err');
-      // Broker badge
-      setBadge(brokerBadge, 'Broker offline', 'bg-danger');
     });
 
     client.on('error', (e) => console.error('MQTT error', e));
@@ -295,9 +261,6 @@
       let msg;
       try { msg = JSON.parse(payload.toString()); }
       catch (err) { console.warn('Payload non valido:', payload?.toString()); return; }
-
-      // ogni messaggio visto aggiorna la "presenza" del device
-      touchDeviceSeen();
 
       if (topic === TOPIC_SENSOR_DHT22) {
         if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
