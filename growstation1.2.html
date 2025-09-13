@@ -18,9 +18,9 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <style>
-    body { font-family: "Roboto", sans-serif; background-color: #000401; }
+    body { font-family: "Roboto", sans-serif; background-color: #01270a; }
 
-    /* Cards: mantengo la tua estetica */
+    /* Cards: estetica personale */
     .gs-card {
       background-color: #f2fbfb;
       border: 2px groove #116530;
@@ -48,16 +48,21 @@
     .btn-on  { background:#ecfdf5; color:#18a558; }
     .btn-off { background:#fef2f2; color:#e90d0de2; }
     .btn-gs:disabled { opacity:.6; cursor:not-allowed; }
-    .device-on  { outline: 2px solid #18a558; }
-    .device-off { outline: 2px solid #e90d0de2; }
 
-    /* Divider che NON va a tutto schermo */
+    /* Evidenziazione stato (più visibile di un semplice outline) */
+    .device-on  { background: #d1fae5 !important; border-color:#10b981 !important; }
+    .device-off { background: #ffe1e1 !important; border-color:#ef4444 !important; }
+
+    /* Divider centrato che NON va a tutto schermo */
     .section-divider {
       height: 1px;
       background: rgba(255,255,255,0.25);
-      max-width: 720px; /* limita la larghezza */
+      max-width: 720px;
       margin: 24px auto;
     }
+
+    /* Badge spacing */
+    .status-badges .badge { margin-left: .5rem; }
   </style>
 </head>
 
@@ -69,7 +74,12 @@
       <div class="col-12 col-lg-10">
         <div class="gs-minicard p-3">
           <h1 class="title mb-2">GrowStation – Frontend MQTT</h1>
-          <div id="conn" class="muted">Stato connessione: <span id="conn_state" class="err">disconnesso</span></div>
+          <div id="conn" class="muted status-badges">
+            Stato connessione:
+            <span id="conn_state" class="err">disconnesso</span>
+            <span id="badge_broker" class="badge rounded-pill bg-danger">Broker offline</span>
+            <span id="badge_device" class="badge rounded-pill bg-secondary">Device sconosciuto</span>
+          </div>
         </div>
       </div>
     </div>
@@ -207,18 +217,44 @@
     // === CONNESSIONE MQTT ===
     const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
     const connEl = document.getElementById('conn_state');
+    const brokerBadge = document.getElementById('badge_broker');
+    const devBadge = document.getElementById('badge_device');
+
+    // Device presence heuristics (no backend change): mark online if any message seen recently
+    let lastSeen = 0;
+    const DEVICE_ONLINE_MS = 8000;   // <=8s → online
+    const DEVICE_AWAY_MS   = 30000;  // 8–30s → assente
+
+    function setBadge(el, text, cls) {
+      el.className = 'badge rounded-pill ' + cls;
+      el.textContent = text;
+    }
+    function touchDeviceSeen() { lastSeen = Date.now(); }
+    function refreshDeviceBadge() {
+      if (!lastSeen) return; // stays "sconosciuto" finché non vediamo messaggi
+      const delta = Date.now() - lastSeen;
+      if (delta <= DEVICE_ONLINE_MS)      setBadge(devBadge, 'Device online', 'bg-success');
+      else if (delta <= DEVICE_AWAY_MS)   setBadge(devBadge, `Assente ${Math.round(delta/1000)}s`, 'bg-warning text-dark');
+      else                                setBadge(devBadge, 'Device offline', 'bg-danger');
+    }
+    setInterval(refreshDeviceBadge, 1000);
     client.on('connect', () => {
       connEl.textContent = 'connesso';
       connEl.classList.remove('err');
       connEl.classList.add('ok');
+      // Broker badge
+      setBadge(brokerBadge, 'Broker online', 'bg-success');
 
       client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS], { qos: 1 });
+    });
     });
 
     client.on('close', () => {
       connEl.textContent = 'disconnesso';
       connEl.classList.remove('ok');
       connEl.classList.add('err');
+      // Broker badge
+      setBadge(brokerBadge, 'Broker offline', 'bg-danger');
     });
 
     client.on('error', (e) => console.error('MQTT error', e));
@@ -235,11 +271,33 @@
     const devOn  = document.getElementById('devOn');
     const devOff = document.getElementById('devOff');
 
+    // === Helper: UI optimistic-lite ===
+    function setDeviceUI(kind, on) {
+      const map = { fan:[fanOn,fanOff], irr:[irrOn,irrOff], dev:[devOn,devOff] };
+      const pair = map[kind];
+      if (!pair) return;
+      const [btnOn, btnOff] = pair;
+      btnOn.classList.toggle('device-on',  on);
+      btnOff.classList.toggle('device-off', !on);
+      // Accessibilità opzionale
+      btnOn.setAttribute('aria-pressed', String(on));
+      btnOff.setAttribute('aria-pressed', String(!on));
+    }
+
+    // === Anti-spam: disabilita temporaneamente dopo click (facoltativo) ===
+    function tempDisable(btns, ms=250) {
+      btns.forEach(b => b.disabled = true);
+      setTimeout(() => btns.forEach(b => b.disabled = false), ms);
+    }
+
     // === RICEZIONE MESSAGGI ===
     client.on('message', (topic, payload) => {
       let msg;
       try { msg = JSON.parse(payload.toString()); }
       catch (err) { console.warn('Payload non valido:', payload?.toString()); return; }
+
+      // ogni messaggio visto aggiorna la "presenza" del device
+      touchDeviceSeen();
 
       if (topic === TOPIC_SENSOR_DHT22) {
         if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
@@ -248,23 +306,14 @@
         if (typeof msg.data === 'string') dataEl.textContent = msg.data;
         if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
       } else if (topic === TOPIC_FAN_STATUS) {
-        if (msg && typeof msg.state === 'string') {
-          const on = msg.state.toUpperCase() === 'ON';
-          fanOn .classList.toggle('device-on',  on);
-          fanOff.classList.toggle('device-off', !on);
-        }
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('fan', on);
       } else if (topic === TOPIC_IRR_STATUS) {
-        if (msg && typeof msg.state === 'string') {
-          const on = msg.state.toUpperCase() === 'ON';
-          irrOn .classList.toggle('device-on',  on);
-          irrOff.classList.toggle('device-off', !on);
-        }
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('irr', on);
       } else if (topic === TOPIC_DEV_STATUS) {
-        if (msg && typeof msg.state === 'string') {
-          const on = msg.state.toUpperCase() === 'ON';
-          devOn .classList.toggle('device-on',  on);
-          devOff.classList.toggle('device-off', !on);
-        }
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('dev', on);
       }
     });
 
@@ -308,16 +357,19 @@
     // === COMANDI DISPOSITIVI (JSON) ===
     function publishCmd(topic, state) {
       if (!client.connected) return console.warn('MQTT non connesso');
-      const payload = JSON.stringify({ state: String(state).toUpperCase() });
+      const payload = JSON.stringify({ state: String(state).toUpperCase() }); // "ON"/"OFF"
       client.publish(topic, payload, { qos: 1, retain: false });
     }
 
-    fanOn .addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'ON'));
-    fanOff.addEventListener('click', () => publishCmd(TOPIC_FAN_CTRL, 'OFF'));
-    irrOn .addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'ON'));
-    irrOff.addEventListener('click', () => publishCmd(TOPIC_IRR_CTRL, 'OFF'));
-    devOn .addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'ON'));
-    devOff.addEventListener('click', () => publishCmd(TOPIC_DEV_CTRL, 'OFF'));
+    // === Click handlers con UI optimistic-lite ===
+    fanOn .addEventListener('click', () => { setDeviceUI('fan', true);  publishCmd(TOPIC_FAN_CTRL, 'ON');  tempDisable([fanOn, fanOff]); });
+    fanOff.addEventListener('click', () => { setDeviceUI('fan', false); publishCmd(TOPIC_FAN_CTRL, 'OFF'); tempDisable([fanOn, fanOff]); });
+
+    irrOn .addEventListener('click', () => { setDeviceUI('irr', true);  publishCmd(TOPIC_IRR_CTRL, 'ON');  tempDisable([irrOn, irrOff]); });
+    irrOff.addEventListener('click', () => { setDeviceUI('irr', false); publishCmd(TOPIC_IRR_CTRL, 'OFF'); tempDisable([irrOn, irrOff]); });
+
+    devOn .addEventListener('click', () => { setDeviceUI('dev', true);  publishCmd(TOPIC_DEV_CTRL, 'ON');  tempDisable([devOn, devOff]); });
+    devOff.addEventListener('click', () => { setDeviceUI('dev', false); publishCmd(TOPIC_DEV_CTRL, 'OFF'); tempDisable([devOn, devOff]); });
   </script>
 </body>
 </html>
