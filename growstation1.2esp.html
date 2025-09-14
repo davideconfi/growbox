@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GrowStation – Control MQTT</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- MQTT -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+  <style>
+    body { font-family: "Roboto", sans-serif; background-color: #01270a; }
+
+    /* Cards: estetica personale */
+    .gs-card {
+      background-color: #f2fbfb;
+      border: 2px groove #116530;
+      border-radius: 20px;
+      box-shadow: 3px 2px 3px 2px #21b6a8;
+    }
+    .gs-minicard {
+      background-color: #f6f6ff;
+      border: 2px groove #21b6a8;
+      border-radius: 20px;
+      box-shadow: -3px 2px 3px 2px #a3ebb1;
+    }
+
+    .row-inline { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+    .muted { color: #858685; font-size: 14px; text-align: right; }
+    .big { font-size: 24px; font-weight: 700; }
+    .ok { color: #18a558; }
+    .err { color: #ef4444; }
+    .title { font-style: italic; text-align: center; font-size: 2em; letter-spacing: 2px; color:#05445e; text-shadow: 2px 2px 2px #8ff0a2; }
+    .minititle { text-align: center; color:#13778b; font-size: 1.3em; text-shadow: -2px 2px 2px #8ff0a2; }
+    input[type="range"] { width: 100%; }
+    code { background: #f3f4f6; padding: 0 6px; border-radius: 6px; }
+
+    .btn-gs { padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; }
+    .btn-on  { background:#ecfdf5; color:#18a558; }
+    .btn-off { background:#fef2f2; color:#e90d0de2; }
+    .btn-gs:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* Evidenziazione stato (più visibile di un semplice outline) */
+    .device-on  { background: #d1fae5 !important; border-color:#10b981 !important; }
+    .device-off { background: #ffe1e1 !important; border-color:#ef4444 !important; }
+
+    /* Divider centrato che NON va a tutto schermo */
+    .section-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.25);
+      max-width: 720px;
+      margin: 24px auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <div class="gs-minicard p-3">
+          <h1 class="title mb-2">GrowStation – Frontend MQTT</h1>
+        </div>
+          <div id="conn" class="muted">Estado conexión<span id="conn_state" class="err">desconectado</span></div>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- GRID PRINCIPALE -->
+    <div class="row g-4 justify-content-center">
+      <!-- LED CONTROL -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-card p-3 h-100">
+          <h2 class="minititle mb-3">CONTROL LED (PWM)</h2>
+
+          <div class="row-inline mb-2">
+            <label for="led1Range" class="me-2"><strong>LED 1 Red</strong></label>
+            <input id="led1Range" type="range" min="0" max="1023" step="1" value="0" />
+            <output id="led1Val" class="ms-2">0</output>
+          </div>
+          <p class="muted mb-3">Publica en topic <code>growstation/control/led1</code> el valor 0–1023.</p>
+
+          <hr class="my-3 opacity-50">
+
+          <div class="row-inline mb-2">
+            <label for="led2Range" class="me-2"><strong>LED 2 Green</strong></label>
+            <input id="led2Range" type="range" min="0" max="1023" step="1" value="0" />
+            <output id="led2Val" class="ms-2">0</output>
+          </div>
+          <p class="muted mb-3">Publica en topic <code>growstation/control/led2</code> el valor 0–1023.</p>
+
+          <hr class="my-3 opacity-50">
+
+          <div class="row-inline mb-2">
+            <label for="led3Range" class="me-2"><strong>LED 3 Blue</strong></label>
+            <input id="led3Range" type="range" min="0" max="1023" step="1" value="0" />
+            <output id="led3Val" class="ms-2">0</output>
+          </div>
+          <p class="muted mb-0">Publica en topic <code>growstation/control/led3</code> el valor 0–1023.</p>
+        </div>
+      </div>
+
+      <!-- SENSORE -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-minicard p-3 h-100">
+          <h2 class="minititle mb-3">DATOS SENSOR (DHT22)</h2>
+          <div class="row-inline"><div><strong>TEMPERATURA</strong></div><div class="big" id="temp">--.- °C</div></div>
+          <div class="row-inline mt-2"><div><strong>HUMEDAD</strong></div><div class="big" id="hum">--.- %</div></div>
+          <p class="muted mb-0 mt-2">Recibe JSON de <code>growstation/sensor/dht22</code></p>
+        </div>
+      </div>
+
+      <!-- ORA -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-card p-3 h-100">
+          <h2 class="minititle mb-3">HORA LOCAL</h2>
+          <div class="row-inline"><div><strong>FECHA</strong></div><div class="big" id="data"> --/--/--</div></div>
+          <div class="row-inline mt-2"><div><strong>HORA</strong></div><div class="big" id="ora"> --:--:--</div></div>
+          <p class="muted mb-0 mt-2">Recibe de <code>growstation/clock</code></p>
+        </div>
+      </div>
+
+      <!-- DISPOSITIVI -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-minicard p-3 h-100">
+          <h2 class="minititle mb-3"><strong>DISPOSITIVOS</strong></h2>
+
+          <div class="row-inline">
+            <div>
+              <strong>VENTILADOR</strong>
+              <div class="muted text-start">Topic: <code>growbox/control/ventilador</code></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="fanOn"  class="btn-gs btn-on">ON</button>
+              <button id="fanOff" class="btn-gs btn-off">OFF</button>
+            </div>
+          </div>
+
+          <div class="row-inline mt-3">
+            <div>
+              <strong>RIEGO</strong>
+              <div class="muted text-start">Topic: <code>growbox/control/irrigation</code></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="irrOn"  class="btn-gs btn-on">ON</button>
+              <button id="irrOff" class="btn-gs btn-off">OFF</button>
+            </div>
+          </div>
+
+          <div class="row-inline mt-3">
+            <div>
+              <strong>DEVICE EXTERNO</strong>
+              <div class="muted text-start">Topic: <code>growbox/control/device_ext</code></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="devOn"  class="btn-gs btn-on">ON</button>
+              <button id="devOff" class="btn-gs btn-off">OFF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /row -->
+
+    <div class="section-divider"></div>
+
+  </div><!-- /container -->
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // === TOPIC CONTROL ===
+    const TOPIC_CONTROL_L1   = 'growstation/control/led1';
+    const TOPIC_CONTROL_L2   = 'growstation/control/led2';
+    const TOPIC_CONTROL_L3   = 'growstation/control/led3';
+    const TOPIC_FAN_CTRL     = 'growbox/control/ventilador';
+    const TOPIC_IRR_CTRL     = 'growbox/control/irrigation';
+    const TOPIC_DEV_CTRL     = 'growbox/control/device_ext';
+    // === TOPIC STATUS DISPOSITIVI ===
+    const TOPIC_FAN_STATUS   = 'growbox/status/ventilador';
+    const TOPIC_IRR_STATUS   = 'growbox/status/irrigation';
+    const TOPIC_DEV_STATUS   = 'growbox/status/device_ext';
+    // === TOPIC CLOCK/SENSOR ===
+    const TOPIC_SENSOR_DHT22 = 'growstation/sensor/dht22';
+    const TOPIC_CLOCK        = 'growstation/clock';
+
+    // === CONFIG MQTT===
+    const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+    const MQTT_OPTIONS = {
+      connectTimeout: 5000,
+      clientId: 'web_'+Math.random().toString(16).slice(2),
+      username: 'growstationRadio',
+      password: 'Mqtt2025',
+      clean: true,
+    };
+
+    // === CONNESSIONE MQTT ===
+    const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+    const connEl = document.getElementById('conn_state');
+    client.on('connect', () => {
+      connEl.textContent = 'conectado';
+      connEl.classList.remove('err');
+      connEl.classList.add('ok');
+
+      client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS], { qos: 1 });
+    });
+
+    client.on('close', () => {
+      connEl.textContent = 'desconectado';
+      connEl.classList.remove('ok');
+      connEl.classList.add('err');
+    });
+
+    client.on('error', (e) => console.error('MQTT error', e));
+
+    // === ELEMENTI UI ===
+    const tempEl = document.getElementById('temp');
+    const humEl  = document.getElementById('hum');
+    const dataEl = document.getElementById('data');
+    const oraEl  = document.getElementById('ora');
+    const fanOn  = document.getElementById('fanOn');
+    const fanOff = document.getElementById('fanOff');
+    const irrOn  = document.getElementById('irrOn');
+    const irrOff = document.getElementById('irrOff');
+    const devOn  = document.getElementById('devOn');
+    const devOff = document.getElementById('devOff');
+
+    // === Helper: UI optimistic-lite ===
+    function setDeviceUI(kind, on) {
+      const map = { fan:[fanOn,fanOff], irr:[irrOn,irrOff], dev:[devOn,devOff] };
+      const pair = map[kind];
+      if (!pair) return;
+      const [btnOn, btnOff] = pair;
+      btnOn.classList.toggle('device-on',  on);
+      btnOff.classList.toggle('device-off', !on);
+      // Accessibilità opzionale
+      btnOn.setAttribute('aria-pressed', String(on));
+      btnOff.setAttribute('aria-pressed', String(!on));
+    }
+
+    // === Anti-spam: disabilita temporaneamente dopo click (facoltativo) ===
+    function tempDisable(btns, ms=250) {
+      btns.forEach(b => b.disabled = true);
+      setTimeout(() => btns.forEach(b => b.disabled = false), ms);
+    }
+
+    // === RICEZIONE MESSAGGI ===
+    client.on('message', (topic, payload) => {
+      let msg;
+      try { msg = JSON.parse(payload.toString()); }
+      catch (err) { console.warn('Payload non valido:', payload?.toString()); return; }
+
+      if (topic === TOPIC_SENSOR_DHT22) {
+        if (typeof msg.temp === 'number') tempEl.textContent = msg.temp.toFixed(1) + ' °C';
+        if (typeof msg.hum  === 'number') humEl.textContent  = msg.hum.toFixed(1)  + ' %';
+      } else if (topic === TOPIC_CLOCK) {
+        if (typeof msg.data === 'string') dataEl.textContent = msg.data;
+        if (typeof msg.ora  === 'string') oraEl.textContent  = msg.ora;
+      } else if (topic === TOPIC_FAN_STATUS) {
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('fan', on);
+      } else if (topic === TOPIC_IRR_STATUS) {
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('irr', on);
+      } else if (topic === TOPIC_DEV_STATUS) {
+        const on = msg?.state?.toUpperCase() === 'ON';
+        setDeviceUI('dev', on);
+      }
+    });
+
+    // === CONTROLLO LED ===
+    const led1Range = document.getElementById('led1Range');
+    const led1Out   = document.getElementById('led1Val');
+    const led2Range = document.getElementById('led2Range');
+    const led2Out   = document.getElementById('led2Val');
+    const led3Range = document.getElementById('led3Range');
+    const led3Out   = document.getElementById('led3Val');
+    const DEBOUNCE_MS = 120;
+    let t1, t2, t3;
+
+    led1Range.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10) || 0;
+      led1Out.textContent = v;
+      clearTimeout(t1);
+      t1 = setTimeout(() => {
+        if (client.connected) client.publish(TOPIC_CONTROL_L1, String(v), { qos: 1, retain: false });
+      }, DEBOUNCE_MS);
+    });
+
+    led2Range.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10) || 0;
+      led2Out.textContent = v;
+      clearTimeout(t2);
+      t2 = setTimeout(() => {
+        if (client.connected) client.publish(TOPIC_CONTROL_L2, String(v), { qos: 1, retain: false });
+      }, DEBOUNCE_MS);
+    });
+
+    led3Range.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10) || 0;
+      led3Out.textContent = v;
+      clearTimeout(t3);
+      t3 = setTimeout(() => {
+        if (client.connected) client.publish(TOPIC_CONTROL_L3, String(v), { qos: 1, retain: false });
+      }, DEBOUNCE_MS);
+    });
+
+    // === COMANDI DISPOSITIVI (JSON) ===
+    function publishCmd(topic, state) {
+      if (!client.connected) return console.warn('MQTT non connesso');
+      const payload = JSON.stringify({ state: String(state).toUpperCase() }); // "ON"/"OFF"
+      client.publish(topic, payload, { qos: 1, retain: false });
+    }
+
+    // === Click handlers con UI optimistic-lite ===
+    fanOn .addEventListener('click', () => { setDeviceUI('fan', true);  publishCmd(TOPIC_FAN_CTRL, 'ON');  tempDisable([fanOn, fanOff]); });
+    fanOff.addEventListener('click', () => { setDeviceUI('fan', false); publishCmd(TOPIC_FAN_CTRL, 'OFF'); tempDisable([fanOn, fanOff]); });
+
+    irrOn .addEventListener('click', () => { setDeviceUI('irr', true);  publishCmd(TOPIC_IRR_CTRL, 'ON');  tempDisable([irrOn, irrOff]); });
+    irrOff.addEventListener('click', () => { setDeviceUI('irr', false); publishCmd(TOPIC_IRR_CTRL, 'OFF'); tempDisable([irrOn, irrOff]); });
+
+    devOn .addEventListener('click', () => { setDeviceUI('dev', true);  publishCmd(TOPIC_DEV_CTRL, 'ON');  tempDisable([devOn, devOff]); });
+    devOff.addEventListener('click', () => { setDeviceUI('dev', false); publishCmd(TOPIC_DEV_CTRL, 'OFF'); tempDisable([devOn, devOff]); });
+  </script>
+</body>
+</html>
