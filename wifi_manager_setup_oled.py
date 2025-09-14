@@ -105,26 +105,31 @@ def web_server():
         options = "".join([f"<option value='{ssid.decode()}'>{ssid.decode()}</option>" for ssid, *_ in nets])
 
         response = f"""
-            <!DOCTYPE html>
+          <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Growstation – Login</title>
+  <title><center>Growstation – Login</center></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {{ font-family: system-ui, sans-serif; margin: 24px; background: #f5f7ff; }}
-    .card {{ max-width: 640px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,.04); }}
-    
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #01270a; text-align: center;}
+        .card { background-color: #f2fbfb; max-width: 560px; border: 2px  groove #116530; border-radius: 20px; padding: 18px; box-shadow: 3px 2px 3px 2px #21b6a8; }
+.ssid{text-align: left;}
+    .title{ font-style: italic  ;text-align: center;font-size: 2em;letter-spacing: 2px; color:#05445e;text-shadow: 2px 2px 2px #8ff0a2;}
+
   </style>
 </head>
 <body>
   <div class="card mt-5">
-        <h2>Configurazione WiFi Growstation </h2>
-        <form method='POST'>
-        SSID: <select name='ssid'>{options}</select><br>
+      <form method='POST'>
+            <div class="title">Configuración WiFi Growstation</div>
+            <br>
+        <div class=ssid> SSID: <select name='ssid'>{options}</select><br></div>
+        <br>
         Password: <input name='pass' type='password'><br>
-        <input type='submit' value='Connetti'>
+        <br>
+        <input type='submit' value='Conectar'>
         </form>
         </div>
     </body>
