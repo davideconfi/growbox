@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -22,6 +23,12 @@
     body { font-family: "Roboto", sans-serif; background-color: #01270a; }
 
     /* Cards: estetica personale */
+    .gs-titlecard {
+      background-color: #f1f4e3;
+      border: 2px groove #116530;
+      border-radius: 20px;
+      box-shadow: 3px 2px 3px 2px #21b6a8;
+    }
     .gs-card {
       background-color: #f2fbfb;
       border: 2px groove #116530;
@@ -70,7 +77,9 @@
     <!-- HEADER -->
     <div class="row justify-content-center">
       <div class="col-12 col-lg-10">
-        <div class="gs-minicard p-3">
+        <div class="gs-titlecard p-3">
+           <!-- <div> <img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\farm.png" 
+        alt ="growstation" title ="greenhouse"width="70" height="70"></div> -->
           <h1 class="title mb-2">GrowStation – Frontend MQTT</h1>
         </div>
           <div id="conn" class="muted">Estado conexión: <span id="conn_state" class="err">desconectado</span></div>
@@ -87,7 +96,8 @@
           <h2 class="minititle mb-3">CONTROL LED (PWM)</h2>
 
           <div class="row-inline mb-2">
-            <label for="led1Range" class="me-2"><strong>LED 1 Red</strong></label>
+            <label for="led1Range" class="me-2"><strong>LED 1</strong><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\led red.png" 
+        alt ="led red" title ="red"width="80" height="50"></label>
             <input id="led1Range" type="range" min="0" max="1023" step="1" value="0" />
             <output id="led1Val" class="ms-2">0</output>
           </div>
@@ -96,7 +106,8 @@
           <hr class="my-3 opacity-50">
 
           <div class="row-inline mb-2">
-            <label for="led2Range" class="me-2"><strong>LED 2 Green</strong></label>
+            <label for="led2Range" class="me-2"><strong>LED 2 </strong><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\led verde.png" 
+        alt ="led green" title ="green"width="80" height="50"></label>
             <input id="led2Range" type="range" min="0" max="1023" step="1" value="0" />
             <output id="led2Val" class="ms-2">0</output>
           </div>
@@ -105,42 +116,24 @@
           <hr class="my-3 opacity-50">
 
           <div class="row-inline mb-2">
-            <label for="led3Range" class="me-2"><strong>LED 3 Blue</strong></label>
+            <label for="led3Range" class="me-2"><strong>LED 3 </strong><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\led blue.png" 
+        alt ="led blue" title ="blue"width="80" height="50"></label>
             <input id="led3Range" type="range" min="0" max="1023" step="1" value="0" />
             <output id="led3Val" class="ms-2">0</output>
           </div>
           <p class="muted mb-0">Publica en topic <code>growstation/control/led3</code> el valor 0–1023.</p>
         </div>
       </div>
-
-      <!-- SENSORE -->
-      <div class="col-12 col-md-10 col-lg-5">
-        <div class="gs-minicard p-3 h-100">
-          <h2 class="minititle mb-3">DATOS SENSOR (DHT22)</h2>
-          <div class="row-inline"><div><strong>TEMPERATURA</strong></div><div class="big" id="temp">--.- °C</div></div>
-          <div class="row-inline mt-2"><div><strong>HUMEDAD</strong></div><div class="big" id="hum">--.- %</div></div>
-          <p class="muted mb-0 mt-2">Recibe JSON de <code>growstation/sensor/dht22</code></p>
-        </div>
-      </div>
-
-      <!-- ORA -->
-      <div class="col-12 col-md-10 col-lg-5">
-        <div class="gs-card p-3 h-100">
-          <h2 class="minititle mb-3">HORA LOCAL</h2>
-          <div class="row-inline"><div><strong>FECHA</strong></div><div class="big" id="data"> --/--/--</div></div>
-          <div class="row-inline mt-2"><div><strong>HORA</strong></div><div class="big" id="ora"> --:--:--</div></div>
-          <p class="muted mb-0 mt-2">Recibe de <code>growstation/clock</code></p>
-        </div>
-      </div>
-
-      <!-- DISPOSITIVI -->
+   <!-- DISPOSITIVI -->
       <div class="col-12 col-md-10 col-lg-5">
         <div class="gs-minicard p-3 h-100">
           <h2 class="minititle mb-3"><strong>DISPOSITIVOS</strong></h2>
 
-          <div class="row-inline">
+          <div class="row-inline mb-2">
             <div>
-              <strong>VENTILADOR</strong>
+               <img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\extractor.png" 
+        alt ="fan" title ="ventilador"width="50" height="50"> </div>
+                    <div> <strong>VENTILADOR</strong> 
               <div class="muted text-start">Topic: <code>growbox/control/ventilador</code></div>
             </div>
             <div class="d-flex gap-2">
@@ -148,10 +141,13 @@
               <button id="fanOff" class="btn-gs btn-off">OFF</button>
             </div>
           </div>
+          <hr class="my-3 opacity-50">
 
-          <div class="row-inline mt-3">
+          <div class="row-inline mb-2">
             <div>
-              <strong>RIEGO</strong>
+              <img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\irrigation.png" 
+        alt ="riego" title ="riego"width="50" height="50">  </div>
+              <div><strong>RIEGO</strong> 
               <div class="muted text-start">Topic: <code>growbox/control/irrigation</code></div>
             </div>
             <div class="d-flex gap-2">
@@ -159,10 +155,13 @@
               <button id="irrOff" class="btn-gs btn-off">OFF</button>
             </div>
           </div>
+          <hr class="my-3 opacity-50">
 
-          <div class="row-inline mt-3">
+          <div class="row-inline mb-2">
             <div>
-              <strong>DEVICE EXTERNO</strong>
+                <img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\device ext.png" 
+        alt ="luz" title ="velador"width="50" height="50"></div>
+              <div><strong>DEVICE EXTERNO</strong>
               <div class="muted text-start">Topic: <code>growbox/control/device_ext</code></div>
             </div>
             <div class="d-flex gap-2">
@@ -172,6 +171,32 @@
           </div>
         </div>
       </div>
+      
+      <!-- SENSORE -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-minicard p-3 h-100">
+          <h2 class="minititle mb-3">DATOS SENSOR (DHT22)</h2>
+          <div class="row-inline"> <img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\tempreature.png" 
+        alt ="temp" title ="termometer"width="40" height="40"><div><strong>TEMPERATURA</strong></div><div class="big" id="temp">--.- °C</div></div> <hr>
+          <div class="row-inline mt-2"><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\humidity.png" 
+        alt ="hum" title ="humedad"width="40" height="40"><div><strong>HUMEDAD</strong></div><div class="big" id="hum">--.- %</div></div>
+          <p class="muted mb-0 mt-2">Recibe JSON de <code>growstation/sensor/dht22</code></p>
+        </div>
+      </div>
+
+      <!-- ORA -->
+      <div class="col-12 col-md-10 col-lg-5">
+        <div class="gs-card p-3 h-100">
+          <h2 class="minititle mb-3">HORA LOCAL</h2>
+          <div class="row-inline mt-2"><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\calendar.png" 
+        alt ="fecha" title ="calendario"width="40" height="40"><div><strong>FECHA</strong></div><div class="big" id="data">--/--/--</div></div> <hr>
+          <div class="row-inline mt-2"><img src="C:\Users\david\Documents\PROYECTS\growbox seria\MQTT\funziona_wifi_broker_3led_dht22_oled\frontend\earth-hour.png" 
+        alt ="hora" title ="hora local"width="40" height="40"><div><strong>HORA</strong></div><div class="big" id="ora">--:--:--   </div></div>
+          <p class="muted mb-0 mt-2">Recibe de <code>growstation/clock</code></p>
+        </div>
+      </div>
+
+   
     </div><!-- /row -->
 
     <div class="section-divider"></div>
