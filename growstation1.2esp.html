@@ -63,11 +63,17 @@
     .device-off { background: #ffe1e1 !important; border-color:#ef4444 !important; }
 
     /* Divider centrato che NON va a tutto schermo */
-    .section-divider {
+    .section-divider-main {
       height: 1px;
       background: rgba(255,255,255,0.25);
       max-width: 720px;
       margin: 24px auto;
+    }
+    .section-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.25);
+      max-width: 560px;
+      margin: 10px auto;
     }
   </style>
 </head>
@@ -87,7 +93,7 @@
       </div>
     </div>
 
-    <div class="section-divider"></div>
+    <div class="section-divider-main"></div>
 
     <!-- GRID PRINCIPALE -->
     <div class="row g-4 justify-content-center">
