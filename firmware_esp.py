@@ -54,10 +54,10 @@ TOPIC_CLOCK = b"growstation/clock"
 TOPIC_CONTROL_L1 = b"growstation/control/led1"
 TOPIC_CONTROL_L2 = b"growstation/control/led2"  
 TOPIC_CONTROL_L3 = b"growstation/control/led3"
-TOPIC_FAN_CTRL    = b"growbox/control/ventilador"
-TOPIC_IRR_CTRL    = b"growbox/control/irrigation"
-TOPIC_FAN_STATUS  = b"growbox/status/ventilador"
-TOPIC_IRR_STATUS  = b"growbox/status/irrigation"
+TOPIC_FAN_CTRL    = b"growstation/control/ventilador"
+TOPIC_IRR_CTRL    = b"growstation/control/irrigation"
+TOPIC_FAN_STATUS  = b"growstation/status/ventilador"
+TOPIC_IRR_STATUS  = b"growstation/status/irrigation"
 
 # ====== FUNCIONES ======
 def lectura_dht_sensor():
