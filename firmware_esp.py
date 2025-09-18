@@ -6,7 +6,7 @@ import machine
 import ujson as json
 from machine import Pin, PWM, SoftI2C
 from umqtt.robust import MQTTClient
-from wifi_manager_setup_oled import setup_wifi
+from wifi_manager_setup import setup_wifi
 import dht 
 from ssd1306 import SSD1306_I2C
 
@@ -68,7 +68,7 @@ def lectura_dht_sensor():
 def sync_time(max_retries=5):
     ntptime.host = "pool.ntp.org"
     for i in range(max_retries):
-    print("Sincronización horaria...")
+#        print("Sincronización horaria...")
         try:
             ntptime.settime()
             print("Hora sincronizada:", time.localtime())
@@ -223,6 +223,3 @@ def display_clock():
 while True:
     publish_data()
     display_clock()
-
-
-
