@@ -154,7 +154,7 @@
     
     const url = "wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud"; // es. wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud
     mqttClient = mqtt.connect(url, {
-      clientId: "gui-" + Math.random().toString(16).slice(2),
+      clientId: "web_" + Math.random().toString(16).slice(2),
       username: "growstationRadio",
       password: "Mqtt2025",
       clean: true,
