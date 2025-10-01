@@ -143,6 +143,7 @@
   // ---- MQTT publish ----
   const TOPIC_SET   = "growstation/config/manual/set";
   const TOPIC_STATE = "growstation/config/manual/state"; // opzionale: per vedere l'ack
+  const TOPIC_EVT   = "Growstation/events/schedule"
 
  // === CONFIG MQTT===
     const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
@@ -162,7 +163,7 @@
       connEl.classList.remove('err');
       connEl.classList.add('ok');
 
-      client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS], { qos: 1 });
+      client.subscribe([TOPIC_STATE, TOPIC_EVT], { qos: 1 });
     });
 
     client.on('close', () => {
