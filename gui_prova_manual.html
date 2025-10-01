@@ -144,29 +144,34 @@
   const TOPIC_SET   = "growstation/config/manual/set";
   const TOPIC_STATE = "growstation/config/manual/state"; // opzionale: per vedere l'ack
 
-  // Se hai già un mqttClient connesso altrove, lo riusa:
-  let mqttClient = window.mqttClient || null;
-
-  async function ensureMqtt() {
-    if (mqttClient && mqttClient.connected) return mqttClient;
-
-    //MINIMAL CONNECT (compila i placeholder e scommenta se ti serve qui)
-    
-    const url = "wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud"; // es. wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud
-    mqttClient = mqtt.connect(url, {
-      clientId: "web_" + Math.random().toString(16).slice(2),
-      username: "growstationRadio",
-      password: "Mqtt2025",
+ // === CONFIG MQTT===
+    const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+    const MQTT_OPTIONS = {
+      connectTimeout: 5000,
+      clientId: 'web_'+Math.random().toString(16).slice(2),
+      username: 'growstationRadio',
+      password: 'Mqtt2025',
       clean: true,
-      reconnectPeriod: 2000,
-      connectTimeout: 8000,
+    };
+
+    // === CONNESSIONE MQTT ===
+    const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+    const connEl = document.getElementById('conn_state');
+    client.on('connect', () => {
+      connEl.textContent = 'conectado';
+      connEl.classList.remove('err');
+      connEl.classList.add('ok');
+
+      client.subscribe([TOPIC_SENSOR_DHT22, TOPIC_CLOCK, TOPIC_FAN_STATUS, TOPIC_IRR_STATUS, TOPIC_DEV_STATUS], { qos: 1 });
     });
-    mqttClient.on("connect", () => console.log("MQTT connected"));
-    mqttClient.on("error",   (e) => console.log("MQTT error", e));
-    mqttClient.subscribe(TOPIC_STATE, { qos: 1 }, () => {});
-    
-    return mqttClient;
-  }
+
+    client.on('close', () => {
+      connEl.textContent = 'desconectado';
+      connEl.classList.remove('ok');
+      connEl.classList.add('err');
+    });
+
+    client.on('error', (e) => console.error('MQTT error', e));
 
   document.getElementById("send").onclick = async () => {
     try {
