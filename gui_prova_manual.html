@@ -3,6 +3,10 @@
 
 <div class="card" style="max-width:680px;padding:16px;border:1px solid #e5e7eb;border-radius:14px">
   <h3>Modalità Manuale – Programmazione</h3>
+   <!-- aggiungi uno stato connessione dove preferisci -->
+<div style="margin:8px 0">
+  Stato MQTT: <span id="conn_state" class="err">disconnesso</span>
+</div>
 
   <label>Fase</label>
   <div id="phaseBtns" style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px">
@@ -54,6 +58,8 @@
   };
 
   // ---- UI logic ----
+
+  
   const DAYS = ["mon","tue","wed","thu","fri","sat","sun"]; // non usati nel payload manuale
   let selectedKey = null;
   const $phaseBtns = [...document.querySelectorAll(".phase")];
@@ -143,7 +149,7 @@
   // ---- MQTT publish ----
   const TOPIC_SET   = "growstation/config/manual/set";
   const TOPIC_STATE = "growstation/config/manual/state"; // opzionale: per vedere l'ack
-  const TOPIC_EVT   = "Growstation/events/schedule"
+  const TOPIC_EVT   = "growstation/events/schedule"
 
  // === CONFIG MQTT===
     const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
@@ -174,18 +180,37 @@
 
     client.on('error', (e) => console.error('MQTT error', e));
 
-  document.getElementById("send").onclick = async () => {
-    try {
-      const payload = buildPayload();
-      document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
 
-      const client = await ensureMqtt();
-      if (!client || !client.connected) { alert("MQTT non connesso."); return; }
+const sendBtn = document.getElementById("send");
+sendBtn.disabled = true;
 
-      client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
-      alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+client.on('connect', () => {
+  connEl.textContent = 'connesso';
+  connEl.classList.remove('err');
+  connEl.classList.add('ok');
+
+  client.subscribe([TOPIC_STATE, TOPIC_EVT], { qos: 1 });
+  sendBtn.disabled = false;
+});
+
+client.on('close', () => {
+  connEl.textContent = 'disconnesso';
+  connEl.classList.remove('ok');
+  connEl.classList.add('err');
+  sendBtn.disabled = true;
+});
+  
+  document.getElementById("send").onclick = () => {
+  try {
+    const payload = buildPayload();
+    document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
+
+    if (!client.connected) { alert("MQTT non connesso."); return; }
+
+    client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
+    alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
+  } catch (e) {
+    alert(e.message);
+  }
+};
 </script>
