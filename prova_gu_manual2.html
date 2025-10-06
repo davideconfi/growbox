@@ -155,7 +155,7 @@
     // Payload atteso dal firmware (nessun light_off, nessun until_date)
     return {
       phase: selectedKey,           // "plantula" | "veg" | "flora" | "uv"
-      weeks: weeks,
+      weeks,
       start_date: startDate,        // "YYYY-MM-DD"
       light_on: lightOn,            // "HH:MM"
       irrig_time: irrigTime,        // "HH:MM"
@@ -174,6 +174,7 @@
   const TOPIC_SET   = "growstation/config/manual/set";
   const TOPIC_STATE = "growstation/config/manual/state"; // opzionale: per vedere l'ack
   const TOPIC_EVT   = "growstation/events/schedule"
+    const TOPIC_STATUS= "growstation/status";                // GUI -> subscribe (facoltativo)
 
  // === CONFIG MQTT===
     const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
@@ -189,6 +190,7 @@
     // === CONNESSIONE MQTT ===
     const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
     const connEl = document.getElementById('conn_state');
+    
     client.on('connect', () => {
     connEl.textContent = 'connesso'; connEl.classList.remove('err'); connEl.classList.add('ok');
     // Sub agli ACK e agli eventi (QoS differenziati)
