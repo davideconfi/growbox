@@ -73,7 +73,7 @@
 </div>
 
 <script>
-  // Mappa fasi → fotoperiodo (per calcolare lo spegnimento; NON viene inviato)
+  // ---- Costanti UI ----
   const PHASES = {
     plantula: { label: "Plantula", photoperiod_h: 18 },
     veg:      { label: "Vegetativa", photoperiod_h: 18 },
@@ -81,10 +81,6 @@
     uv:       { label: "UV",         photoperiod_h: 12 },
   };
 
-  // ---- UI logic ----
-
-  
-  const DAYS = ["mon","tue","wed","thu","fri","sat","sun"]; // non usati nel payload manuale
   let selectedKey = null;
   const $phaseBtns = [...document.querySelectorAll(".phase")];
 
@@ -100,19 +96,8 @@
   );
 
   function pad2(n){ return n < 10 ? "0"+n : ""+n; }
-
-  function todayISO() {
-    const d = new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  }
-
-  function addWeeksISO(isoDate, weeks) {
-    const d = isoDate ? new Date(isoDate+"T00:00:00") : new Date();
-    d.setDate(d.getDate() + weeks*7);
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  }
-
-  // hh:mm + hours → "HH:MM" (mod 24h)
+  function todayISO() { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function addWeeksISO(isoDate, weeks) { const d=isoDate?new Date(isoDate+"T00:00:00"):new Date(); d.setDate(d.getDate()+weeks*7); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
   function addHoursToTime(hhmm, hours) {
     if (!hhmm) return "";
     const [H,M] = hhmm.split(":").map(Number);
@@ -142,24 +127,21 @@
     if (!selectedKey) throw new Error("Seleziona una fase.");
     const weeks = Number(document.getElementById("weeks").value);
     if (!weeks || weeks < 1) throw new Error("Inserisci le settimane (>0).");
-
     const startDate = document.getElementById("startDate").value || todayISO();
     const lightOn   = document.getElementById("lightOn").value;
     const irrigTime = document.getElementById("irrigTime").value;
     const irrigMin  = Number(document.getElementById("irrigMin").value);
-
     if (!lightOn)   throw new Error("Imposta l'ora di accensione luci.");
     if (!irrigTime) throw new Error("Imposta l'ora di irrigazione.");
     if (!irrigMin)  throw new Error("Imposta la durata irrigazione (min).");
 
-    // Payload atteso dal firmware (nessun light_off, nessun until_date)
     return {
-      phase: selectedKey,           // "plantula" | "veg" | "flora" | "uv"
+      phase: selectedKey,
       weeks,
-      start_date: startDate,        // "YYYY-MM-DD"
-      light_on: lightOn,            // "HH:MM"
-      irrig_time: irrigTime,        // "HH:MM"
-      irrig_minutes: irrigMin       // intero
+      start_date: startDate,
+      light_on: lightOn,
+      irrig_time: irrigTime,
+      irrig_minutes: irrigMin
     };
   }
 
@@ -170,28 +152,27 @@
     } catch (e) { alert(e.message); }
   };
 
-  // ---- MQTT publish ----
-  const TOPIC_SET   = "growstation/config/manual/set";
-  const TOPIC_STATE = "growstation/config/manual/state"; // opzionale: per vedere l'ack
-  const TOPIC_EVT   = "growstation/events/schedule"
-    const TOPIC_STATUS= "growstation/status";                // GUI -> subscribe (facoltativo)
+  // ---- MQTT ----
+  const TOPIC_SET   = "growstation/config/manual/set";     // GUI -> publish (retain)
+  const TOPIC_STATE = "growstation/config/manual/state";   // GUI -> subscribe
+  const TOPIC_EVT   = "growstation/events/schedule";       // GUI -> subscribe
+  const TOPIC_STATUS= "growstation/status";                // GUI -> subscribe (facoltativo)
 
- // === CONFIG MQTT===
-    const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
-    const MQTT_OPTIONS = {
-      connectTimeout: 8000,
-      clientId: 'web_'+Math.random().toString(16).slice(2),
-      username: 'growstationRadio',
-      password: 'Mqtt2025',
-      clean: true,
-      reconnectPeriod: 2000,
-    };
+  const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+  const MQTT_OPTIONS = {
+    connectTimeout: 8000,
+    clientId: 'gui_'+Math.random().toString(16).slice(2),
+    username: 'growstationRadio',   // TODO: cambia con il tuo utente GUI
+    password: 'Mqtt2025',          // TODO: cambia con la tua password
+    clean: true,
+    reconnectPeriod: 2000,
+  };
 
-    // === CONNESSIONE MQTT ===
-    const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
-    const connEl = document.getElementById('conn_state');
-    
-    client.on('connect', () => {
+  const connEl = document.getElementById('conn_state');
+  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+
+  // Unico handler di connessione
+  client.on('connect', () => {
     connEl.textContent = 'connesso'; connEl.classList.remove('err'); connEl.classList.add('ok');
     // Sub agli ACK e agli eventi (QoS differenziati)
     client.subscribe(TOPIC_STATE, { qos: 1 });
@@ -200,20 +181,16 @@
     document.getElementById('send').disabled = false;
   });
 
+  client.on('close', () => {
+    connEl.textContent = 'disconnesso'; connEl.classList.remove('ok'); connEl.classList.add('err');
+    document.getElementById('send').disabled = true;
+  });
 
-    client.on('close', () => {
-      connEl.textContent = 'disconnesso';
-      connEl.classList.remove('ok');
-      connEl.classList.add('err');
-      document.getElementById('send').disabled = true;
-    });
+  client.on('error', (e) => console.error('MQTT error', e));
 
-    client.on('error', (e) => console.error('MQTT error', e));
-
-
-const ackEl = document.getElementById('ack');
-const eventsEl = document.getElementById('events');
-
+  // Visualizza ACK ed Eventi
+  const ackEl = document.getElementById('ack');
+  const eventsEl = document.getElementById('events');
 
   client.on('message', (topic, msgBuf) => {
     const text = msgBuf.toString();
@@ -241,21 +218,253 @@ const eventsEl = document.getElementById('events');
     }
   });
 
-    // Publish payload retained su /set
-
+  // Publish payload retained su /set
   document.getElementById("send").onclick = () => {
-  try {
-    const payload = buildPayload();
-    document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
+    try {
+      const payload = buildPayload();
+      document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
+      if (!client.connected) { alert("MQTT non connesso."); return; }
+      client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
+      alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <title>Growstation – Manuale (GUI→MQTT)</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body{font-family: system-ui, sans-serif; margin:24px}
+    .card{max-width:760px;padding:16px;border:1px solid #e5e7eb;border-radius:14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .status{padding:2px 8px;border-radius:999px;font-size:12px}
+    .ok{background:#dcfce7;color:#065f46}
+    .err{background:#fee2e2;color:#991b1b}
+    pre{background:#f8fafc;padding:12px;border-radius:10px;overflow:auto}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;cursor:pointer}
+    .phase{background:#f1f5f9}
+    .list{max-height:200px;overflow:auto;background:#f8fafc;border-radius:10px;padding:8px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;}
+  </style>
+</head>
+<body>
 
-    if (!client.connected) { alert("MQTT non connesso."); return; }
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <h3 style="margin:0">Modalità Manuale – Programmazione</h3>
+    <div>MQTT: <span id="conn_state" class="status err">disconnesso</span></div>
+  </div>
 
-    client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
-    alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
-  } catch (e) {
-    alert(e.message);
+  <label>Fase</label>
+  <div id="phaseBtns" style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px">
+    <button class="phase" data-key="plantula">Plantula [18h]</button>
+    <button class="phase" data-key="veg">Vegetativa [18h]</button>
+    <button class="phase" data-key="flora">Flora [12h]</button>
+    <button class="phase" data-key="uv">UV [12h]</button>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>Settimane ciclo</label>
+      <input id="weeks" type="number" min="1" step="1" placeholder="es. 6">
+    </div>
+    <div>
+      <label>Data inizio (opz.)</label>
+      <input id="startDate" type="date">
+    </div>
+    <div>
+      <label>Ora accensione luci</label>
+      <input id="lightOn" type="time" required>
+      <div id="offHint" style="color:#6b7280;font-size:0.9em;margin-top:4px">Spegnimento: [—]</div>
+    </div>
+    <div>
+      <label>Ora irrigazione</label>
+      <input id="irrigTime" type="time" required>
+      <label style="display:block;margin-top:6px">Durata irrigazione (min)</label>
+      <input id="irrigMin" type="number" min="1" step="1" placeholder="es. 2">
+    </div>
+  </div>
+
+  <div id="summary" style="margin-top:12px;color:#6b7280">—</div>
+
+  <div style="margin-top:14px;display:flex;gap:8px">
+    <button id="preview">Anteprima payload</button>
+    <button id="send" disabled>Invia a MQTT</button>
+  </div>
+
+  <pre id="payload" class="mono" style="margin-top:12px"></pre>
+
+  <h4 style="margin:16px 0 6px">ACK stato (retain)</h4>
+  <pre id="ack" class="mono"></pre>
+
+  <h4 style="margin:16px 0 6px">Eventi (live)</h4>
+  <div id="events" class="list mono"></div>
+</div>
+
+<script>
+  // ---- Costanti UI ----
+  const PHASES = {
+    plantula: { label: "Plantula", photoperiod_h: 18 },
+    veg:      { label: "Vegetativa", photoperiod_h: 18 },
+    flora:    { label: "Flora",      photoperiod_h: 12 },
+    uv:       { label: "UV",         photoperiod_h: 12 },
+  };
+
+  let selectedKey = null;
+  const $phaseBtns = [...document.querySelectorAll(".phase")];
+
+  $phaseBtns.forEach(b => b.onclick = () => {
+    selectedKey = b.dataset.key;
+    $phaseBtns.forEach(x => x.style.outline = "");
+    b.style.outline = "2px solid #2563eb";
+    updateDerived();
+  });
+
+  ["weeks","startDate","lightOn","irrigTime","irrigMin"].forEach(id =>
+    document.getElementById(id).addEventListener("input", updateDerived)
+  );
+
+  function pad2(n){ return n < 10 ? "0"+n : ""+n; }
+  function todayISO() { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function addWeeksISO(isoDate, weeks) { const d=isoDate?new Date(isoDate+"T00:00:00"):new Date(); d.setDate(d.getDate()+weeks*7); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function addHoursToTime(hhmm, hours) {
+    if (!hhmm) return "";
+    const [H,M] = hhmm.split(":").map(Number);
+    const totalMin = H*60 + M + Math.round(hours*60);
+    const mod = ((totalMin % (24*60)) + (24*60)) % (24*60);
+    return `${pad2(Math.floor(mod/60))}:${pad2(mod%60)}`;
   }
-};
+
+  function updateDerived() {
+    const phase = selectedKey ? PHASES[selectedKey] : null;
+    const weeks = Number(document.getElementById("weeks").value || 0);
+    const startDate = document.getElementById("startDate").value || todayISO();
+    const lightOn = document.getElementById("lightOn").value || "";
+    const irrigTime = document.getElementById("irrigTime").value || "";
+    const irrigMin = Number(document.getElementById("irrigMin").value || 0);
+
+    const off = (phase && lightOn) ? addHoursToTime(lightOn, phase.photoperiod_h) : "—";
+    document.getElementById("offHint").textContent = `Spegnimento: [${off}]`;
+
+    const until = (weeks>0) ? addWeeksISO(startDate, weeks) : "—";
+    const phaseLbl = phase ? phase.label : "—";
+    document.getElementById("summary").textContent =
+      `Fase: ${phaseLbl} • Settimane: ${weeks||"—"} • Inizio: ${startDate} • Fine: ${until} • Luci: ${lightOn||"—"} → [${off}] • Irrig: ${irrigTime||"—"} × ${irrigMin||"—"} min`;
+  }
+
+  function buildPayload() {
+    if (!selectedKey) throw new Error("Seleziona una fase.");
+    const weeks = Number(document.getElementById("weeks").value);
+    if (!weeks || weeks < 1) throw new Error("Inserisci le settimane (>0).");
+    const startDate = document.getElementById("startDate").value || todayISO();
+    const lightOn   = document.getElementById("lightOn").value;
+    const irrigTime = document.getElementById("irrigTime").value;
+    const irrigMin  = Number(document.getElementById("irrigMin").value);
+    if (!lightOn)   throw new Error("Imposta l'ora di accensione luci.");
+    if (!irrigTime) throw new Error("Imposta l'ora di irrigazione.");
+    if (!irrigMin)  throw new Error("Imposta la durata irrigazione (min).");
+
+    return {
+      phase: selectedKey,
+      weeks,
+      start_date: startDate,
+      light_on: lightOn,
+      irrig_time: irrigTime,
+      irrig_minutes: irrigMin
+    };
+  }
+
+  document.getElementById("preview").onclick = () => {
+    try {
+      const payload = buildPayload();
+      document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
+    } catch (e) { alert(e.message); }
+  };
+
+  // ---- MQTT ----
+  const TOPIC_SET   = "growstation/config/manual/set";     // GUI -> publish (retain)
+  const TOPIC_STATE = "growstation/config/manual/state";   // GUI -> subscribe
+  const TOPIC_EVT   = "growstation/events/schedule";       // GUI -> subscribe
+  const TOPIC_STATUS= "growstation/status";                // GUI -> subscribe (facoltativo)
+
+  const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
+  const MQTT_OPTIONS = {
+    connectTimeout: 8000,
+    clientId: 'gui_'+Math.random().toString(16).slice(2),
+    username: 'growstationRadio',   // TODO: cambia con il tuo utente GUI
+    password: 'Mqtt2025',          // TODO: cambia con la tua password
+    clean: true,
+    reconnectPeriod: 2000,
+  };
+
+  const connEl = document.getElementById('conn_state');
+  const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
+
+  // Unico handler di connessione
+  client.on('connect', () => {
+    connEl.textContent = 'connesso'; connEl.classList.remove('err'); connEl.classList.add('ok');
+    // Sub agli ACK e agli eventi (QoS differenziati)
+    client.subscribe(TOPIC_STATE, { qos: 1 });
+    client.subscribe(TOPIC_EVT,   { qos: 0 });
+    client.subscribe(TOPIC_STATUS,{ qos: 0 }); // opzionale
+    document.getElementById('send').disabled = false;
+  });
+
+  client.on('close', () => {
+    connEl.textContent = 'disconnesso'; connEl.classList.remove('ok'); connEl.classList.add('err');
+    document.getElementById('send').disabled = true;
+  });
+
+  client.on('error', (e) => console.error('MQTT error', e));
+
+  // Visualizza ACK ed Eventi
+  const ackEl = document.getElementById('ack');
+  const eventsEl = document.getElementById('events');
+
+  client.on('message', (topic, msgBuf) => {
+    const text = msgBuf.toString();
+    try {
+      const obj = JSON.parse(text);
+      if (topic === TOPIC_STATE) {
+        ackEl.textContent = JSON.stringify(obj, null, 2);
+      } else if (topic === TOPIC_EVT) {
+        const line = `[${new Date().toLocaleTimeString()}] ${obj.event}` +
+                     (obj.phase ? ` (${obj.phase})` : '') +
+                     (obj.minutes ? ` ${obj.minutes}min` : '');
+        const div = document.createElement('div');
+        div.textContent = line;
+        eventsEl.prepend(div);
+      } else if (topic === TOPIC_STATUS) {
+        const div = document.createElement('div');
+        div.textContent = `[status] ${text}`;
+        eventsEl.prepend(div);
+      }
+    } catch {
+      // Non-JSON: stampa grezzo
+      const div = document.createElement('div');
+      div.textContent = `[${topic}] ${text}`;
+      eventsEl.prepend(div);
+    }
+  });
+
+  // Publish payload retained su /set
+  document.getElementById("send").onclick = () => {
+    try {
+      const payload = buildPayload();
+      document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
+      if (!client.connected) { alert("MQTT non connesso."); return; }
+      client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
+      alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 </script>
 </body>
 </html>
