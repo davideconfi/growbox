@@ -61,6 +61,8 @@
   <div style="margin-top:14px;display:flex;gap:8px">
     <button id="preview">Anteprima payload</button>
     <button id="send" disabled>Invia a MQTT</button>
+    <button id="resetDaily" disabled>Reset test (oggi)</button>  <!-- NEW -->
+
   </div>
 
   <pre id="payload" class="mono" style="margin-top:12px"></pre>
@@ -157,7 +159,7 @@
   const TOPIC_STATE = "growstation/config/manual/state";   // GUI -> subscribe
   const TOPIC_EVT   = "growstation/events/schedule";       // GUI -> subscribe
   const TOPIC_STATUS= "growstation/status";                // GUI -> subscribe (facoltativo)
-
+  const TOPIC_RESET= "growstation/config/manual/reset_daily"; // NEW
   const MQTT_URL = 'wss://a74d6462f9e64dd1bcb79f0518a2136e.s1.eu.hivemq.cloud:8884/mqtt';
   const MQTT_OPTIONS = {
     connectTimeout: 8000,
@@ -179,11 +181,13 @@
     client.subscribe(TOPIC_EVT,   { qos: 0 });
     client.subscribe(TOPIC_STATUS,{ qos: 0 }); // opzionale
     document.getElementById('send').disabled = false;
+    document.getElementById('resetDaily').disabled = false;   // NEW
   });
 
   client.on('close', () => {
     connEl.textContent = 'disconnesso'; connEl.classList.remove('ok'); connEl.classList.add('err');
     document.getElementById('send').disabled = true;
+    document.getElementById('resetDaily').disabled = true;    // NEW
   });
 
   client.on('error', (e) => console.error('MQTT error', e));
@@ -224,6 +228,15 @@
       const payload = buildPayload();
       document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
       if (!client.connected) { alert("MQTT non connesso."); return; }
+        const cmd = { action: "reset_daily" };
+  // Evento “live”: niente retain
+  client.publish(TOPIC_RESET, JSON.stringify(cmd), { qos: 1, retain: false });
+  // opzionale: feedback in pagina
+  const eventsEl = document.getElementById('events');
+  const div = document.createElement('div');
+  div.textContent = `[GUI] reset_daily inviato`;
+  eventsEl.prepend(div);
+
       client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
       alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
     } catch (e) {
