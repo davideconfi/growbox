@@ -222,27 +222,27 @@
     }
   });
 
-  // Publish payload retained su /set
+ // Publish payload retained su /set
   document.getElementById("send").onclick = () => {
     try {
       const payload = buildPayload();
       document.getElementById("payload").textContent = JSON.stringify(payload, null, 2);
       if (!client.connected) { alert("MQTT non connesso."); return; }
-        const cmd = { action: "reset_daily" };
-  // Evento “live”: niente retain
-  client.publish(TOPIC_RESET, JSON.stringify(cmd), { qos: 1, retain: false });
-  // opzionale: feedback in pagina
-  const eventsEl = document.getElementById('events');
-  const div = document.createElement('div');
-  div.textContent = `[GUI] reset_daily inviato`;
-  eventsEl.prepend(div);
-
       client.publish(TOPIC_SET, JSON.stringify(payload), { qos: 1, retain: true });
       alert("Inviato a MQTT (retain). Attendi l'ack su /state.");
     } catch (e) {
       alert(e.message);
     }
   };
+document.getElementById("resetDaily").onclick = () => {
+    if (!client.connected) { alert("MQTT non connesso."); return; }
+  client.publish(TOPIC_RESET, JSON.stringify(cmd), { qos: 1, retain: false });
+        const cmd = { action: "reset_daily" };
+  const eventsEl = document.getElementById('events');
+  const div = document.createElement('div');
+  div.textContent = `[GUI] reset_daily inviato`;
+  eventsEl.prepend(div);
+};
 </script>
 </body>
 </html>
